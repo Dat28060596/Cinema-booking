@@ -1,0 +1,3057 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cinema Booking</title>
+    <meta name="description" content="Book your cinema tickets online. Browse movies, select seats, and complete your booking in minutes." />
+    <style>
+      :root {
+        --bg: #1a1510;
+        --bg-gradient: linear-gradient(180deg, #1a1510 0%, #0f0d08 100%);
+        --surface: #241e16;
+        --surface-hover: #2e2720;
+        --surface-light: #352d23;
+        --border: #3d3428;
+        --border-light: #4a3f32;
+        --text: #e8e0d4;
+        --text-muted: #9a8e7e;
+        --text-dim: #6b6050;
+        --accent: #c9a84c;
+        --accent-hover: #dbb85c;
+        --accent-dim: rgba(201, 168, 76, 0.15);
+        --available: #2a2520;
+        --available-hover: #3a332a;
+        --held-mine: #c9a84c;
+        --held-other: #e06c00;
+        --confirmed: #c0392b;
+        --success: #27ae60;
+        --danger: #e74c3c;
+        --warning-bg: #3d2020;
+        --notice-bg: #3d2a1a;
+        --notice-border: #6b4a2a;
+        --font: "Segoe UI", Arial, sans-serif;
+        --radius: 8px;
+        --radius-sm: 4px;
+        --radius-lg: 12px;
+        --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: rgba(26, 21, 16, 0.95);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .header-logo {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.08em;
+        cursor: pointer;
+      }
+
+      .header-nav {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+      }
+
+      .header-nav-link {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.4rem 0.8rem;
+        border-radius: var(--radius-sm);
+        transition: color 0.2s, background 0.2s;
+      }
+
+      .header-nav-link:hover {
+        color: var(--text);
+        background: var(--surface);
+      }
+
+      .user-badge {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        background: var(--surface);
+        padding: 0.3rem 0.8rem;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+      }
+
+      .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .screen-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+      }
+
+      .screen-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+      }
+
+      .search-bar {
+        margin-bottom: 2rem;
+        display: flex;
+        gap: 1rem;
+      }
+
+      .search-input {
+        flex: 1;
+        padding: 0.8rem 1.2rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 1rem;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .movie-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+      }
+
+      .movie-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+      }
+
+      .movie-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--accent);
+        box-shadow: 0 8px 32px rgba(201, 168, 76, 0.15);
+      }
+
+      .movie-card-poster {
+        width: 100%;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+        display: block;
+      }
+
+      .movie-card-body {
+        padding: 0.8rem 1rem 1rem;
+      }
+
+      .movie-card-trailer {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-bottom: 0.4rem;
+      }
+
+      .movie-card-trailer-icon {
+        width: 0;
+        height: 0;
+        border-left: 6px solid var(--text-muted);
+        border-top: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+      }
+
+      .movie-card-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1.3;
+      }
+
+      .movie-detail {
+        display: none;
+      }
+
+      .movie-detail-hero {
+        display: flex;
+        gap: 2rem;
+        padding: 2rem;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        margin-bottom: 2rem;
+        border: 1px solid var(--border);
+      }
+
+      .movie-detail-poster {
+        width: 180px;
+        min-width: 180px;
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+
+      .movie-detail-poster img {
+        width: 100%;
+        display: block;
+      }
+
+      .movie-detail-info {
+        flex: 1;
+      }
+
+      .movie-detail-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+        line-height: 1.2;
+      }
+
+      .movie-detail-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .rating-badge {
+        display: inline-block;
+        background: var(--accent-dim);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .meta-text {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .movie-detail-synopsis {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        max-width: 600px;
+        margin-bottom: 0.5rem;
+      }
+
+      .synopsis-more {
+        color: var(--accent);
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-block;
+        margin-bottom: 1rem;
+      }
+
+      .synopsis-more:hover {
+        text-decoration: underline;
+      }
+
+      .screenings-section {
+        margin-top: 1rem;
+      }
+
+      .screenings-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+
+      .date-tabs {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .date-tab {
+        padding: 0.5rem 1rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s, color 0.2s;
+        font-family: var(--font);
+      }
+
+      .date-tab:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+      }
+
+      .date-tab.active {
+        background: var(--accent-dim);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .screening-slots {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .screening-slot {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.8rem 1.2rem;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        text-align: center;
+        min-width: 100px;
+        border-left: 3px solid var(--accent);
+      }
+
+      .screening-slot:hover {
+        border-color: var(--accent);
+        background: var(--surface-hover);
+      }
+
+      .screening-slot-hall {
+        font-size: 0.7rem;
+        color: var(--accent);
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+      }
+
+      .screening-slot-time {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+      }
+
+      .screening-slot-format {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+      }
+
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+        transition: background 0.2s, color 0.2s;
+        font-family: var(--font);
+      }
+
+      .back-btn:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+      }
+
+      .seat-view {
+        display: none;
+      }
+
+      .seat-content {
+        display: flex;
+        gap: 2rem;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .screen-area {
+        flex: 1;
+        min-width: 300px;
+      }
+
+      .screen-label {
+        text-align: center;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--text-muted);
+        margin-bottom: 0.6rem;
+      }
+
+      .screen-bar {
+        height: 3px;
+        background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        border-radius: 2px;
+        margin: 0 2rem 1.5rem;
+      }
+
+      .seat-grid {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .seat-row {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      .row-label {
+        width: 1.5rem;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
+
+      .seat {
+        width: 36px;
+        height: 32px;
+        border-radius: 6px 6px 3px 3px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.65rem;
+        font-family: var(--font);
+        color: var(--text-muted);
+        background: var(--available);
+        transition: background 0.2s, transform 0.15s;
+      }
+
+      .seat:hover:not(.seat--held-mine):not(.seat--held-other):not(.seat--confirmed) {
+        background: var(--available-hover);
+        transform: scale(1.08);
+      }
+
+      .seat--held-mine {
+        background: var(--held-mine);
+        color: #000;
+        cursor: default;
+      }
+
+      .seat--held-other {
+        background: var(--held-other);
+        color: #fff;
+        cursor: not-allowed;
+      }
+
+      .seat--confirmed {
+        background: var(--confirmed);
+        color: #fff;
+        cursor: not-allowed;
+      }
+
+      .legend {
+        display: flex;
+        gap: 1.2rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+      }
+
+      .legend-swatch {
+        width: 14px;
+        height: 12px;
+        border-radius: 3px 3px 2px 2px;
+      }
+
+      .checkout-panel {
+        width: 300px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+      }
+
+      .checkout-panel h3 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        color: var(--accent);
+      }
+
+      .checkout-info {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .checkout-info-label {
+        color: var(--text-muted);
+      }
+
+      .checkout-buttons {
+        display: flex;
+        gap: 0.6rem;
+        margin-top: 1rem;
+      }
+
+      .btn {
+        flex: 1;
+        padding: 0.7rem;
+        border: none;
+        border-radius: var(--radius);
+        font-family: var(--font);
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.1s;
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+      }
+
+      .btn:active {
+        transform: scale(0.98);
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #1a1510;
+      }
+
+      .btn-confirm {
+        background: var(--success);
+        color: #fff;
+      }
+
+      .btn-danger {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      .btn-secondary {
+        background: var(--surface-light);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .btn-full {
+        width: 100%;
+        flex: none;
+      }
+
+      .status-msg {
+        text-align: center;
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .status-msg.success {
+        color: var(--success);
+      }
+
+      .status-msg.error {
+        color: var(--danger);
+      }
+
+      .cart-view {
+        display: none;
+      }
+
+      .progress-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border);
+      }
+
+      .progress-step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .progress-step.active {
+        color: var(--accent);
+      }
+
+      .progress-step.done {
+        color: var(--success);
+      }
+
+      .progress-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: var(--surface-light);
+        border: 2px solid var(--border);
+      }
+
+      .progress-step.active .progress-number {
+        background: var(--accent-dim);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .progress-step.done .progress-number {
+        background: rgba(39, 174, 96, 0.15);
+        border-color: var(--success);
+        color: var(--success);
+      }
+
+      .progress-line {
+        width: 80px;
+        height: 2px;
+        background: var(--border);
+        margin: 0 1rem;
+      }
+
+      .progress-line.done {
+        background: var(--success);
+      }
+
+      .cart-content {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+      }
+
+      .cart-movie-info {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .cart-movie-poster {
+        width: 100px;
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+
+      .cart-movie-poster img {
+        width: 100%;
+        display: block;
+      }
+
+      .cart-movie-details {
+        flex: 1;
+      }
+
+      .cart-movie-date {
+        display: inline-block;
+        background: var(--accent-dim);
+        color: var(--accent);
+        padding: 0.2rem 0.6rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+      }
+
+      .cart-movie-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .cart-movie-meta {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .cart-seat-info {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+
+      .ticket-types {
+        margin-bottom: 1.5rem;
+      }
+
+      .ticket-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .ticket-label {
+        font-size: 0.9rem;
+        min-width: 160px;
+      }
+
+      .ticket-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .ticket-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid var(--border);
+        background: var(--surface-light);
+        color: var(--text);
+        cursor: pointer;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, border-color 0.2s;
+        font-family: var(--font);
+      }
+
+      .ticket-btn:hover {
+        background: var(--surface-hover);
+        border-color: var(--accent);
+      }
+
+      .ticket-count {
+        font-size: 1rem;
+        font-weight: 600;
+        min-width: 24px;
+        text-align: center;
+      }
+
+      .ticket-price {
+        font-size: 0.9rem;
+        font-weight: 600;
+        min-width: 70px;
+        text-align: right;
+        color: var(--accent);
+      }
+
+      .cart-notice {
+        background: var(--notice-bg);
+        border: 1px solid var(--notice-border);
+        border-radius: var(--radius);
+        padding: 1.2rem;
+        margin: 1.5rem 0;
+      }
+
+      .cart-notice-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+      }
+
+      .cart-notice-text {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      .cart-notice-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.8rem;
+        font-size: 0.8rem;
+        color: var(--accent);
+        cursor: pointer;
+      }
+
+      .cart-notice-check input {
+        accent-color: var(--accent);
+      }
+
+      .total-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.2rem;
+        background: var(--surface-light);
+        border-radius: var(--radius);
+        margin: 1.5rem 0;
+        font-weight: 600;
+      }
+
+      .total-bar-amount {
+        font-size: 1.2rem;
+        color: var(--accent);
+      }
+
+      .cart-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1rem;
+      }
+
+      .address-view {
+        display: none;
+      }
+
+      .form-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+      }
+
+      .form-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .form-row {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .form-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .form-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 0.3rem;
+      }
+
+      .form-input {
+        padding: 0.7rem 1rem;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 0.9rem;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .form-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1.5rem;
+      }
+
+      .payment-view {
+        display: none;
+      }
+
+      .payment-content {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+      }
+
+      .payment-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+      }
+
+      .payment-summary {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .payment-summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .payment-summary-row .label {
+        color: var(--text-muted);
+      }
+
+      .payment-summary-total {
+        display: flex;
+        justify-content: space-between;
+        font-size: 1.1rem;
+        font-weight: 700;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border);
+        margin-top: 0.5rem;
+      }
+
+      .qr-section {
+        text-align: center;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        border: 2px dashed var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--bg);
+      }
+
+      .qr-placeholder {
+        width: 200px;
+        height: 200px;
+        border: 2px dashed var(--accent);
+        border-radius: var(--radius);
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        background: var(--surface);
+      }
+
+      .success-view {
+        display: none;
+        text-align: center;
+        padding: 4rem 2rem;
+      }
+
+      .success-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(39, 174, 96, 0.15);
+        border: 2px solid var(--success);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2rem;
+        color: var(--success);
+      }
+
+      .success-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .success-text {
+        font-size: 0.95rem;
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+      }
+
+      .admin-bookings-view {
+        display: none;
+      }
+
+      .admin-booking-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .admin-booking-item {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+      }
+
+      .admin-booking-title {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .admin-booking-detail {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        line-height: 1.6;
+      }
+
+      .admin-tabs {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+      }
+
+      .admin-tab {
+        flex: none;
+        padding: 0.65rem 1rem;
+        background: var(--surface);
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-family: var(--font);
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .admin-tab.active {
+        background: var(--accent);
+        color: #1a1510;
+        border-color: var(--accent);
+      }
+
+      .admin-section {
+        display: none;
+      }
+
+      .admin-section.active {
+        display: block;
+      }
+
+      .admin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .admin-stat {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+      }
+
+      .admin-stat-label {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        margin-bottom: 0.4rem;
+      }
+
+      .admin-stat-value {
+        color: var(--accent);
+        font-size: 1.4rem;
+        font-weight: 800;
+      }
+
+      .admin-form {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .admin-form-title {
+        font-weight: 800;
+        margin-bottom: 1rem;
+      }
+
+      .admin-actions {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+      }
+
+      .admin-actions .btn {
+        flex: none;
+        min-width: 120px;
+      }
+
+      .admin-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .movie-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .seat-content {
+          flex-direction: column;
+        }
+        .checkout-panel {
+          width: 100%;
+        }
+      }
+
+      .login-modal-backdrop {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+      }
+      .login-modal {
+        background: #1e1e1e;
+        padding: 30px;
+        border-radius: 12px;
+        width: 350px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      }
+      .login-modal h2 { margin-top: 0; color: #f5c518; }
+      .login-input {
+        width: 100%; padding: 12px; margin-bottom: 15px;
+        background: #2a2a2a; border: 1px solid #444; color: #fff;
+        border-radius: 6px; box-sizing: border-box;
+      }
+      .login-modal .btn { width: 100%; margin-bottom: 10px; }
+      #loginError { color: #e74c3c; margin-bottom: 10px; font-size: 14px; display: none; }
+      .header-login-btn {
+        background: transparent; border: 1px solid #f5c518; color: #f5c518;
+        padding: 5px 15px; border-radius: 20px; cursor: pointer; margin-right: 15px;
+        font-family: inherit; font-size: 14px; transition: all 0.2s;
+      }
+      .header-login-btn:hover { background: #f5c518; color: #000; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-logo" id="headerLogo">CINEMA</div>
+      <div class="header-nav">
+        <button class="header-login-btn" id="adminBookingsBtn" style="display: none;">Admin Console</button>
+        <button class="header-login-btn" id="headerLoginBtn">Login / Register</button>
+        <div class="user-badge" id="userBadge"></div>
+      </div>
+    </div>
+
+    <div class="page-container">
+
+      <div id="movieGridView">
+        <h1 class="screen-title">Now Showing</h1>
+        <p class="screen-subtitle">Select a movie to view screenings and book tickets</p>
+        <div class="search-bar">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by title or genre..." />
+          <button class="btn btn-primary" id="searchBtn" style="width: auto;">Search</button>
+        </div>
+        <div class="movie-grid" id="movieGrid"></div>
+      </div>
+
+      <div class="movie-detail" id="movieDetailView">
+        <button class="back-btn" id="backToGrid">&larr; Back to movies</button>
+        <div class="movie-detail-hero" id="movieDetailHero"></div>
+        <div class="screenings-section">
+          <h2 class="screenings-title">Existing screenings</h2>
+          <div class="date-tabs" id="dateTabs"></div>
+          <div class="screening-slots" id="screeningSlots"></div>
+        </div>
+      </div>
+
+      <div class="seat-view" id="seatView">
+        <button class="back-btn" id="backToDetail">&larr; Back to movie</button>
+        <div class="seat-content">
+          <div class="screen-area">
+            <div class="screen-label">Screen</div>
+            <div class="screen-bar"></div>
+            <div class="seat-grid" id="seatGrid"></div>
+            <div class="legend">
+              <div class="legend-item">
+                <div class="legend-swatch" style="background: var(--available)"></div>
+                Available
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch" style="background: var(--held-mine)"></div>
+                Your hold
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch" style="background: var(--held-other)"></div>
+                Other hold
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch" style="background: var(--confirmed)"></div>
+                Booked
+              </div>
+            </div>
+          </div>
+          <div id="checkoutArea"></div>
+        </div>
+      </div>
+
+      <div class="cart-view" id="cartView">
+        <div id="cartProgress"></div>
+        <div class="cart-content" id="cartContent"></div>
+      </div>
+
+      <div class="address-view" id="addressView">
+        <div id="addressProgress"></div>
+        <div class="form-section" id="addressContent"></div>
+      </div>
+
+      <div class="payment-view" id="paymentView">
+        <div id="paymentProgress"></div>
+        <div class="payment-content" id="paymentContent"></div>
+      </div>
+
+      <div class="success-view" id="successView">
+        <div class="success-icon">&#10003;</div>
+        <h2 class="success-title">Booking Confirmed!</h2>
+        <p class="success-text" id="successText"></p>
+        <button class="btn btn-primary" id="backToHome" style="padding: 0.8rem 2rem;">Back to Home</button>
+      </div>
+
+      <div class="admin-bookings-view" id="adminBookingsView">
+        <button class="back-btn" id="adminBackToMovies">&larr; Back to movies</button>
+        <h1 class="screen-title">Admin Console</h1>
+        <p class="screen-subtitle">Manage bookings, movies, screenings, ticket prices, and revenue.</p>
+        <div class="admin-tabs">
+          <button class="admin-tab active" data-admin-tab="dashboard">Dashboard</button>
+          <button class="admin-tab" data-admin-tab="bookings">Bookings</button>
+          <button class="admin-tab" data-admin-tab="movies">Movies</button>
+          <button class="admin-tab" data-admin-tab="screenings">Screenings</button>
+          <button class="admin-tab" data-admin-tab="prices">Prices</button>
+        </div>
+        <div id="adminStatus"></div>
+        <div class="admin-section active" id="adminDashboardSection"></div>
+        <div class="admin-section" id="adminBookingsSection">
+          <div class="admin-booking-list" id="adminBookingsContent"></div>
+        </div>
+        <div class="admin-section" id="adminMoviesSection"></div>
+        <div class="admin-section" id="adminScreeningsSection"></div>
+        <div class="admin-section" id="adminPricesSection"></div>
+      </div>
+
+    </div>
+
+
+    <div class="login-modal-backdrop" id="loginModalBackdrop">
+      <div class="login-modal">
+        <h2 id="authModalTitle">Login</h2>
+        <div id="loginError">Invalid credentials</div>
+        <input type="text" id="loginUsername" class="login-input" placeholder="Username" />
+        <input type="password" id="loginPassword" class="login-input" placeholder="Password" />
+        <button class="btn btn-primary" id="loginSubmitBtn">Login</button>
+        <button class="btn btn-secondary" id="loginCancelBtn">Cancel</button>
+        <p style="text-align: center; margin-top: 15px; font-size: 14px;">
+            <a href="#" id="authModeToggle" style="color: #f5c518; text-decoration: none;">Don't have an account? Register</a>
+        </p>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var savedUserId = localStorage.getItem("cinema_user_id");
+        var savedUsername = localStorage.getItem("cinema_username");
+        var isAdmin = localStorage.getItem("cinema_is_admin") === "true";
+        var userID = savedUserId || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+        document.getElementById("userBadge").textContent = "user: " + (savedUsername || userID);
+        if (isAdmin) {
+          document.getElementById("adminBookingsBtn").style.display = "inline-block";
+        }
+
+        var movies = [];
+        var selectedMovie = null;
+        var selectedScreening = null;
+        var selectedDateFilter = null;
+        var activeHoldSeatIds = [];
+        var pollInterval = null;
+
+        var ticketTypes = [
+          { code: "normal", label: "Normal", amount: 13.00 },
+          { code: "pupils", label: "Pupils", amount: 9.00 },
+          { code: "seniors", label: "Seniors", amount: 10.00 },
+          { code: "students", label: "Students", amount: 10.00 },
+          { code: "child", label: "Child", amount: 7.00 }
+        ];
+        var ticketPrices = {};
+        var ticketCounts = {
+          normal: 1,
+          pupils: 0,
+          seniors: 0,
+          students: 0,
+          child: 0
+        };
+        var ageConfirmed = false;
+        setTicketPriceData(ticketTypes);
+
+        var customerInfo = {
+          email: "",
+          emailRepeat: "",
+          firstName: "",
+          lastName: ""
+        };
+        var adminActiveTab = "dashboard";
+        var adminMovieEditingId = null;
+        var adminScreeningEditingId = null;
+        var adminMoviesCache = [];
+        var adminScreeningsCache = [];
+
+        function api(method, path, body) {
+          var opts = {
+            method: method,
+            headers: {
+              "Content-Type": "application/json",
+              "X-User-Id": userID
+            }
+          };
+          if (body) {
+            opts.body = JSON.stringify(body);
+          }
+          return fetch(path, opts).then(function (r) {
+            if (r.status === 204) return null;
+            return r.text().then(function (text) {
+              var data = {};
+              if (text) {
+                data = JSON.parse(text);
+              }
+              if (!r.ok) throw new Error(data.error || "request failed");
+              return data;
+            });
+          });
+        }
+
+        function setTicketPriceData(prices) {
+          if (!prices || prices.length === 0) return;
+          ticketTypes = prices.map(function (price) {
+            return {
+              code: price.code,
+              label: price.label,
+              amount: Number(price.amount)
+            };
+          });
+          ticketPrices = {};
+          for (var i = 0; i < ticketTypes.length; i++) {
+            ticketPrices[ticketTypes[i].code] = ticketTypes[i].amount;
+          }
+          resetTicketCounts(activeHoldSeatIds.length || 1);
+        }
+
+        function loadTicketPrices() {
+          return api("GET", "/ticket-prices")
+            .then(function (prices) {
+              setTicketPriceData(prices);
+            })
+            .catch(function () {
+              setTicketPriceData(ticketTypes);
+            });
+        }
+
+        function getPrimaryTicketType() {
+          for (var i = 0; i < ticketTypes.length; i++) {
+            if (ticketTypes[i].code === "normal") return ticketTypes[i];
+          }
+          return ticketTypes[0];
+        }
+
+        function showView(viewId) {
+          var views = ["movieGridView", "movieDetailView", "seatView", "cartView", "addressView", "paymentView", "successView", "adminBookingsView"];
+          for (var i = 0; i < views.length; i++) {
+            var el = document.getElementById(views[i]);
+            if (views[i] === viewId) {
+              el.style.display = "block";
+            } else {
+              el.style.display = "none";
+            }
+          }
+        }
+
+        function loadMovies(query) {
+          var url = "/movies";
+          if (query) {
+            url = "/movies/search?query=" + encodeURIComponent(query);
+          }
+          api("GET", url).then(function (data) {
+            movies = data;
+            renderMovieGrid();
+          });
+        }
+
+        function renderMovieGrid() {
+          var grid = document.getElementById("movieGrid");
+          grid.innerHTML = "";
+          for (var i = 0; i < movies.length; i++) {
+            var m = movies[i];
+            var card = document.createElement("div");
+            card.className = "movie-card";
+
+            var img = document.createElement("img");
+            img.className = "movie-card-poster";
+            img.src = m.poster_url;
+            img.alt = m.title;
+            card.appendChild(img);
+
+            var body = document.createElement("div");
+            body.className = "movie-card-body";
+
+            var title = document.createElement("div");
+            title.className = "movie-card-title";
+            title.textContent = m.title;
+            body.appendChild(title);
+
+            card.appendChild(body);
+
+            (function (movie) {
+              card.addEventListener("click", function () {
+                openMovieDetail(movie);
+              });
+            })(m);
+
+            grid.appendChild(card);
+          }
+        }
+
+        function openMovieDetail(movie) {
+          selectedMovie = movie;
+          showView("movieDetailView");
+          renderMovieDetail();
+          renderDateTabs();
+        }
+
+        function renderMovieDetail() {
+          var hero = document.getElementById("movieDetailHero");
+          hero.innerHTML = "";
+
+          var posterWrap = document.createElement("div");
+          posterWrap.className = "movie-detail-poster";
+          var posterImg = document.createElement("img");
+          posterImg.src = selectedMovie.poster_url;
+          posterImg.alt = selectedMovie.title;
+          posterWrap.appendChild(posterImg);
+          hero.appendChild(posterWrap);
+
+          var info = document.createElement("div");
+          info.className = "movie-detail-info";
+
+          var title = document.createElement("h2");
+          title.className = "movie-detail-title";
+          title.textContent = selectedMovie.title;
+          info.appendChild(title);
+
+          var meta = document.createElement("div");
+          meta.className = "movie-detail-meta";
+
+          var badge = document.createElement("span");
+          badge.className = "rating-badge";
+          badge.textContent = selectedMovie.rating;
+          meta.appendChild(badge);
+
+          var genreText = document.createElement("span");
+          genreText.className = "meta-text";
+          genreText.textContent = selectedMovie.genre;
+          meta.appendChild(genreText);
+
+          var durText = document.createElement("span");
+          durText.className = "meta-text";
+          durText.textContent = selectedMovie.duration + " minutes";
+          meta.appendChild(durText);
+
+          info.appendChild(meta);
+
+          var synopsis = document.createElement("p");
+          synopsis.className = "movie-detail-synopsis";
+          synopsis.textContent = selectedMovie.synopsis;
+          info.appendChild(synopsis);
+
+          hero.appendChild(info);
+        }
+
+        function renderDateTabs() {
+          var tabs = document.getElementById("dateTabs");
+          tabs.innerHTML = "";
+
+          if (!selectedMovie || !selectedMovie.screenings) return;
+
+          var dates = [];
+          var dateLabels = {};
+          for (var i = 0; i < selectedMovie.screenings.length; i++) {
+            var s = selectedMovie.screenings[i];
+            if (dates.indexOf(s.date) === -1) {
+              dates.push(s.date);
+              dateLabels[s.date] = s.date_label;
+            }
+          }
+
+          if (selectedDateFilter === null && dates.length > 0) {
+            selectedDateFilter = dates[0];
+          }
+
+          for (var d = 0; d < dates.length; d++) {
+            var tab = document.createElement("button");
+            tab.className = "date-tab";
+            if (dates[d] === selectedDateFilter) {
+              tab.className = tab.className + " active";
+            }
+            tab.textContent = dateLabels[dates[d]];
+
+            (function (dateVal) {
+              tab.addEventListener("click", function () {
+                selectedDateFilter = dateVal;
+                renderDateTabs();
+              });
+            })(dates[d]);
+
+            tabs.appendChild(tab);
+          }
+
+          renderScreeningSlots();
+        }
+
+        function renderScreeningSlots() {
+          var container = document.getElementById("screeningSlots");
+          container.innerHTML = "";
+
+          if (!selectedMovie || !selectedMovie.screenings) return;
+
+          var filtered = [];
+          for (var i = 0; i < selectedMovie.screenings.length; i++) {
+            if (selectedMovie.screenings[i].date === selectedDateFilter) {
+              filtered.push(selectedMovie.screenings[i]);
+            }
+          }
+
+          for (var s = 0; s < filtered.length; s++) {
+            var slot = document.createElement("div");
+            slot.className = "screening-slot";
+
+            var hall = document.createElement("div");
+            hall.className = "screening-slot-hall";
+            hall.textContent = filtered[s].hall;
+            slot.appendChild(hall);
+
+            var time = document.createElement("div");
+            time.className = "screening-slot-time";
+            time.textContent = filtered[s].time;
+            slot.appendChild(time);
+
+
+            (function (screening) {
+              slot.addEventListener("click", function () {
+                selectedScreening = screening;
+                openSeatView();
+              });
+            })(filtered[s]);
+
+            container.appendChild(slot);
+          }
+        }
+
+        function openSeatView() {
+          showView("seatView");
+          document.getElementById("checkoutArea").innerHTML = "";
+          activeHoldSeatIds = [];
+          fetchSeats();
+          startPolling();
+        }
+
+        function fetchSeats() {
+          if (!selectedScreening) return;
+          api("GET", "/screenings/" + selectedScreening.screening_id + "/seats").then(function (seats) {
+            renderSeatGrid(seats);
+          });
+        }
+
+        function renderSeatGrid(seatStatuses) {
+          var grid = document.getElementById("seatGrid");
+          grid.innerHTML = "";
+          var statusMap = {};
+          for (var i = 0; i < seatStatuses.length; i++) {
+            statusMap[seatStatuses[i].seat_id] = seatStatuses[i];
+          }
+
+          var rowLabels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+          for (var r = 0; r < selectedMovie.rows; r++) {
+            var rowDiv = document.createElement("div");
+            rowDiv.className = "seat-row";
+
+            var labelLeft = document.createElement("div");
+            labelLeft.className = "row-label";
+            labelLeft.textContent = rowLabels[r];
+            rowDiv.appendChild(labelLeft);
+
+            for (var s = 1; s <= selectedMovie.seats_per_row; s++) {
+              var seatID = rowLabels[r] + s;
+              var btn = document.createElement("button");
+              btn.className = "seat";
+              btn.textContent = s;
+
+              var info = statusMap[seatID];
+              if (info) {
+                if (info.confirmed) {
+                  btn.classList.add("seat--confirmed");
+                  btn.disabled = true;
+                } else if (info.booked && info.user_id === userID) {
+                  btn.classList.add("seat--held-mine");
+                  if (activeHoldSeatIds.indexOf(seatID) === -1) {
+                    activeHoldSeatIds.push(seatID);
+                  }
+                } else if (info.booked) {
+                  btn.classList.add("seat--held-other");
+                  btn.disabled = true;
+                }
+              }
+
+              (function (id) {
+                btn.addEventListener("click", function () {
+                  if (activeHoldSeatIds.indexOf(id) !== -1) {
+                    releaseSeat(id);
+                  } else {
+                    holdSeat(id);
+                  }
+                });
+              })(seatID);
+
+              rowDiv.appendChild(btn);
+            }
+
+            var labelRight = document.createElement("div");
+            labelRight.className = "row-label";
+            labelRight.textContent = rowLabels[r];
+            rowDiv.appendChild(labelRight);
+
+            grid.appendChild(rowDiv);
+          }
+        }
+
+        function holdSeat(seatID) {
+          if (activeHoldSeatIds.indexOf(seatID) !== -1) return;
+          api("POST", "/screenings/" + selectedScreening.screening_id + "/seats/" + seatID + "/hold", { user_id: userID })
+            .then(function (data) {
+              activeHoldSeatIds.push(seatID);
+              fetchSeats();
+              renderCheckout();
+            })
+            .catch(function (err) {
+              showCheckoutStatus("Seat cannot be held.", "error");
+            });
+        }
+
+        function releaseSeat(seatID) {
+          if (activeHoldSeatIds.indexOf(seatID) === -1) return;
+          api("DELETE", "/screenings/" + selectedScreening.screening_id + "/seats/" + seatID, { user_id: userID })
+            .then(function () {
+              activeHoldSeatIds = activeHoldSeatIds.filter(function(id) { return id !== seatID; });
+              fetchSeats();
+              if (activeHoldSeatIds.length === 0) {
+                document.getElementById("checkoutArea").innerHTML = "";
+              } else {
+                renderCheckout();
+              }
+            })
+            .catch(function (err) {
+              showCheckoutStatus(err.message, "error");
+            });
+        }
+
+        function releaseAllSeats() {
+          if (!selectedScreening) {
+            activeHoldSeatIds = [];
+            return;
+          }
+          var seats = activeHoldSeatIds.slice();
+          for (var i = 0; i < seats.length; i++) {
+            releaseSeat(seats[i]);
+          }
+        }
+
+        function renderCheckout() {
+          if (activeHoldSeatIds.length === 0) return;
+          var area = document.getElementById("checkoutArea");
+          area.innerHTML = "";
+
+          var panel = document.createElement("div");
+          panel.className = "checkout-panel";
+
+          var h3 = document.createElement("h3");
+          h3.textContent = selectedMovie.title;
+          h3.style.marginBottom = "5px";
+          panel.appendChild(h3);
+          
+          var subInfo = document.createElement("div");
+          subInfo.style.fontSize = "12px";
+          subInfo.style.color = "#aaa";
+          subInfo.style.marginBottom = "20px";
+          subInfo.textContent = selectedScreening.hall + " \u2022 " + selectedScreening.date_label + " " + selectedScreening.time;
+          panel.appendChild(subInfo);
+
+          var primaryTicketType = getPrimaryTicketType();
+          var totalCost = 0;
+          activeHoldSeatIds.forEach(function(seatId) {
+            var seatRow = document.createElement("div");
+            seatRow.style.display = "flex";
+            seatRow.style.justifyContent = "space-between";
+            seatRow.style.padding = "10px 0";
+            seatRow.style.borderBottom = "1px solid #333";
+            seatRow.style.fontSize = "14px";
+            
+            var nameSpan = document.createElement("span");
+            nameSpan.textContent = "Seat " + seatId + " (" + primaryTicketType.label + ")";
+            
+            var priceSpan = document.createElement("span");
+            priceSpan.textContent = formatPrice(primaryTicketType.amount);
+            
+            seatRow.appendChild(nameSpan);
+            seatRow.appendChild(priceSpan);
+            panel.appendChild(seatRow);
+            
+            totalCost += primaryTicketType.amount;
+          });
+
+          var totalRow = document.createElement("div");
+          totalRow.style.display = "flex";
+          totalRow.style.justifyContent = "space-between";
+          totalRow.style.padding = "15px 0";
+          totalRow.style.fontWeight = "bold";
+          totalRow.style.fontSize = "16px";
+          totalRow.style.marginTop = "10px";
+          
+          var totalLabel = document.createElement("span");
+          totalLabel.textContent = "Total";
+          
+          var totalSpan = document.createElement("span");
+          totalSpan.textContent = formatPrice(totalCost);
+          
+          totalRow.appendChild(totalLabel);
+          totalRow.appendChild(totalSpan);
+          panel.appendChild(totalRow);
+
+          var buttons = document.createElement("div");
+          buttons.className = "checkout-buttons";
+          buttons.style.marginTop = "10px";
+
+          var confirmBtn = document.createElement("button");
+          confirmBtn.className = "btn btn-primary";
+          confirmBtn.style.width = "100%";
+          confirmBtn.textContent = "Continue";
+          confirmBtn.addEventListener("click", function() {
+            if (pollInterval) {
+              clearInterval(pollInterval);
+              pollInterval = null;
+            }
+            openCartView();
+          });
+          buttons.appendChild(confirmBtn);
+
+          var releaseBtn = document.createElement("button");
+          releaseBtn.className = "btn btn-danger";
+          releaseBtn.style.width = "100%";
+          releaseBtn.style.marginTop = "10px";
+          releaseBtn.textContent = "Release All";
+          releaseBtn.addEventListener("click", function() {
+            releaseAllSeats();
+          });
+          buttons.appendChild(releaseBtn);
+
+          panel.appendChild(buttons);
+          var statusDiv = document.createElement("div");
+          statusDiv.id = "checkoutStatus";
+          panel.appendChild(statusDiv);
+          area.appendChild(panel);
+        }
+
+        function showCheckoutStatus(msg, type) {
+          var existingStatus = document.getElementById("checkoutStatus");
+          if (existingStatus && activeHoldSeatIds.length > 0) {
+            existingStatus.className = "status-msg " + type;
+            existingStatus.textContent = msg;
+            existingStatus.style.marginTop = "10px";
+            setTimeout(function() {
+              if (document.getElementById("checkoutStatus")) {
+                document.getElementById("checkoutStatus").textContent = "";
+                document.getElementById("checkoutStatus").className = "";
+              }
+            }, 3000);
+            return;
+          }
+
+          var area = document.getElementById("checkoutArea");
+          area.innerHTML = "";
+          var panel = document.createElement("div");
+          panel.className = "checkout-panel";
+          var statusDiv = document.createElement("div");
+          statusDiv.className = "status-msg " + type;
+          statusDiv.textContent = msg;
+          panel.appendChild(statusDiv);
+          area.appendChild(panel);
+          setTimeout(function () {
+            if (activeHoldSeatIds.length === 0) {
+              area.innerHTML = "";
+            } else {
+              renderCheckout();
+            }
+          }, 3000);
+        }
+
+        function startPolling() {
+          if (pollInterval) clearInterval(pollInterval);
+          pollInterval = setInterval(fetchSeats, 2000);
+        }
+
+        function renderProgressBar(currentStep) {
+          var steps = [
+            { num: 1, label: "Shopping cart" },
+            { num: 2, label: "Address" },
+            { num: 3, label: "Payment" }
+          ];
+
+          var bar = document.createElement("div");
+          bar.className = "progress-bar";
+
+          for (var i = 0; i < steps.length; i++) {
+            var step = document.createElement("div");
+            step.className = "progress-step";
+            if (steps[i].num < currentStep) {
+              step.className = step.className + " done";
+            } else if (steps[i].num === currentStep) {
+              step.className = step.className + " active";
+            }
+
+            var numDiv = document.createElement("div");
+            numDiv.className = "progress-number";
+            if (steps[i].num < currentStep) {
+              numDiv.textContent = "\u2713";
+            } else {
+              numDiv.textContent = steps[i].num;
+            }
+            step.appendChild(numDiv);
+
+            var labelSpan = document.createElement("span");
+            labelSpan.textContent = steps[i].label;
+            step.appendChild(labelSpan);
+
+            bar.appendChild(step);
+
+            if (i < steps.length - 1) {
+              var line = document.createElement("div");
+              line.className = "progress-line";
+              if (steps[i].num < currentStep) {
+                line.className = line.className + " done";
+              }
+              bar.appendChild(line);
+            }
+          }
+          return bar;
+        }
+
+        function openCartView() {
+          resetTicketCounts(activeHoldSeatIds.length);
+          ageConfirmed = false;
+          showView("cartView");
+          renderCartView();
+        }
+
+        function resetTicketCounts(normalCount) {
+          ticketCounts = {};
+          for (var i = 0; i < ticketTypes.length; i++) {
+            ticketCounts[ticketTypes[i].code] = 0;
+          }
+          var primaryTicketType = getPrimaryTicketType();
+          if (primaryTicketType) {
+            ticketCounts[primaryTicketType.code] = normalCount;
+          }
+        }
+
+        function countSelectedTickets() {
+          var count = 0;
+          for (var i = 0; i < ticketTypes.length; i++) {
+            count = count + (ticketCounts[ticketTypes[i].code] || 0);
+          }
+          return count;
+        }
+
+        function calculateTotal() {
+          var total = 0;
+          for (var i = 0; i < ticketTypes.length; i++) {
+            var code = ticketTypes[i].code;
+            total = total + ((ticketCounts[code] || 0) * ticketPrices[code]);
+          }
+          return total;
+        }
+
+        function formatPrice(amount) {
+          return "\u20AC" + Number(amount || 0).toFixed(2);
+        }
+
+        function renderCartView() {
+          var progressContainer = document.getElementById("cartProgress");
+          progressContainer.innerHTML = "";
+          progressContainer.appendChild(renderProgressBar(1));
+
+          var content = document.getElementById("cartContent");
+          content.innerHTML = "";
+
+          var movieInfoDiv = document.createElement("div");
+          movieInfoDiv.className = "cart-movie-info";
+
+          var posterDiv = document.createElement("div");
+          posterDiv.className = "cart-movie-poster";
+          var posterImg = document.createElement("img");
+          posterImg.src = selectedMovie.poster_url;
+          posterImg.alt = selectedMovie.title;
+          posterDiv.appendChild(posterImg);
+          movieInfoDiv.appendChild(posterDiv);
+
+          var detailsDiv = document.createElement("div");
+          detailsDiv.className = "cart-movie-details";
+
+          var dateTag = document.createElement("div");
+          dateTag.className = "cart-movie-date";
+          dateTag.textContent = selectedScreening.date_label + " " + selectedScreening.time;
+          detailsDiv.appendChild(dateTag);
+
+          var titleDiv = document.createElement("div");
+          titleDiv.className = "cart-movie-title";
+          titleDiv.textContent = selectedMovie.title;
+          detailsDiv.appendChild(titleDiv);
+
+          movieInfoDiv.appendChild(detailsDiv);
+          content.appendChild(movieInfoDiv);
+
+          var seatInfo = document.createElement("div");
+          seatInfo.className = "cart-seat-info";
+          seatInfo.textContent = "Seats: " + activeHoldSeatIds.join(", ");
+          content.appendChild(seatInfo);
+
+          var ticketDiv = document.createElement("div");
+          ticketDiv.className = "ticket-types";
+
+          var types = ticketTypes;
+
+          for (var t = 0; t < types.length; t++) {
+            var row = document.createElement("div");
+            row.className = "ticket-row";
+
+            var label = document.createElement("div");
+            label.className = "ticket-label";
+            label.textContent = types[t].label;
+            row.appendChild(label);
+
+            var controls = document.createElement("div");
+            controls.className = "ticket-controls";
+
+            var minusBtn = document.createElement("button");
+            minusBtn.className = "ticket-btn";
+            minusBtn.textContent = "\u2212";
+
+            var countSpan = document.createElement("span");
+            countSpan.className = "ticket-count";
+            countSpan.textContent = ticketCounts[types[t].code] || 0;
+
+            var plusBtn = document.createElement("button");
+            plusBtn.className = "ticket-btn";
+            plusBtn.textContent = "+";
+
+            (function (key) {
+              minusBtn.addEventListener("click", function () {
+                if (ticketCounts[key] > 0) {
+                  ticketCounts[key] = ticketCounts[key] - 1;
+                  renderCartView();
+                }
+              });
+              plusBtn.addEventListener("click", function () {
+                ticketCounts[key] = ticketCounts[key] + 1;
+                renderCartView();
+              });
+            })(types[t].code);
+
+            controls.appendChild(minusBtn);
+            controls.appendChild(countSpan);
+            controls.appendChild(plusBtn);
+            row.appendChild(controls);
+
+            var price = document.createElement("div");
+            price.className = "ticket-price";
+            price.textContent = formatPrice((ticketCounts[types[t].code] || 0) * ticketPrices[types[t].code]);
+            row.appendChild(price);
+
+            ticketDiv.appendChild(row);
+          }
+
+          content.appendChild(ticketDiv);
+
+          var noticeCheck = document.createElement("label");
+          noticeCheck.className = "cart-notice-check";
+          var checkInput = document.createElement("input");
+          checkInput.type = "checkbox";
+          checkInput.checked = ageConfirmed;
+          checkInput.addEventListener("change", function () {
+            ageConfirmed = this.checked;
+          });
+          noticeCheck.appendChild(checkInput);
+          var checkText = document.createTextNode("Confirm Age Restrictions");
+          noticeCheck.appendChild(checkText);
+          content.appendChild(noticeCheck);
+
+          var totalBar = document.createElement("div");
+          totalBar.className = "total-bar";
+          var totalLabel = document.createElement("span");
+          totalLabel.textContent = "Total Amount";
+          totalBar.appendChild(totalLabel);
+          var totalAmount = document.createElement("span");
+          totalAmount.className = "total-bar-amount";
+          totalAmount.textContent = formatPrice(calculateTotal());
+          totalBar.appendChild(totalAmount);
+          content.appendChild(totalBar);
+
+          var buttons = document.createElement("div");
+          buttons.className = "cart-buttons";
+
+          var backBtn = document.createElement("button");
+          backBtn.className = "btn btn-secondary";
+          backBtn.innerHTML = "&laquo; Back";
+          backBtn.addEventListener("click", function () {
+            openSeatView();
+          });
+          buttons.appendChild(backBtn);
+
+          var nextBtn = document.createElement("button");
+          nextBtn.className = "btn btn-primary";
+          nextBtn.innerHTML = "Next &raquo;";
+          nextBtn.addEventListener("click", function () {
+            if (countSelectedTickets() !== activeHoldSeatIds.length) {
+              alert("Please select one ticket type for each selected seat.");
+              return;
+            }
+            if (!ageConfirmed) {
+              alert("Please confirm the age rating notice.");
+              return;
+            }
+            openAddressView();
+          });
+          buttons.appendChild(nextBtn);
+
+          content.appendChild(buttons);
+        }
+
+        function openAddressView() {
+          showView("addressView");
+          renderAddressView();
+        }
+
+        function renderAddressView() {
+          var progressContainer = document.getElementById("addressProgress");
+          progressContainer.innerHTML = "";
+          progressContainer.appendChild(renderProgressBar(2));
+
+          var content = document.getElementById("addressContent");
+          content.innerHTML = "";
+
+          var title = document.createElement("h2");
+          title.className = "form-title";
+          title.textContent = "Your details";
+          content.appendChild(title);
+
+          var emailRow = document.createElement("div");
+          emailRow.className = "form-row";
+
+          var emailGroup = document.createElement("div");
+          emailGroup.className = "form-group";
+          var emailLabel = document.createElement("label");
+          emailLabel.className = "form-label";
+          emailLabel.textContent = "E-mail*";
+          emailGroup.appendChild(emailLabel);
+          var emailInput = document.createElement("input");
+          emailInput.className = "form-input";
+          emailInput.type = "email";
+          emailInput.value = customerInfo.email;
+          emailInput.addEventListener("input", function () {
+            customerInfo.email = this.value;
+          });
+          emailGroup.appendChild(emailInput);
+          emailRow.appendChild(emailGroup);
+
+          var emailRepeatGroup = document.createElement("div");
+          emailRepeatGroup.className = "form-group";
+          var emailRepeatLabel = document.createElement("label");
+          emailRepeatLabel.className = "form-label";
+          emailRepeatLabel.textContent = "Repeat e-mail*";
+          emailRepeatGroup.appendChild(emailRepeatLabel);
+          var emailRepeatInput = document.createElement("input");
+          emailRepeatInput.className = "form-input";
+          emailRepeatInput.type = "email";
+          emailRepeatInput.value = customerInfo.emailRepeat;
+          emailRepeatInput.addEventListener("input", function () {
+            customerInfo.emailRepeat = this.value;
+          });
+          emailRepeatGroup.appendChild(emailRepeatInput);
+          emailRow.appendChild(emailRepeatGroup);
+
+          content.appendChild(emailRow);
+
+          var nameRow = document.createElement("div");
+          nameRow.className = "form-row";
+
+          var fnGroup = document.createElement("div");
+          fnGroup.className = "form-group";
+          var fnLabel = document.createElement("label");
+          fnLabel.className = "form-label";
+          fnLabel.textContent = "Firstname*";
+          fnGroup.appendChild(fnLabel);
+          var fnInput = document.createElement("input");
+          fnInput.className = "form-input";
+          fnInput.type = "text";
+          fnInput.value = customerInfo.firstName;
+          fnInput.addEventListener("input", function () {
+            customerInfo.firstName = this.value;
+          });
+          fnGroup.appendChild(fnInput);
+          nameRow.appendChild(fnGroup);
+
+          var lnGroup = document.createElement("div");
+          lnGroup.className = "form-group";
+          var lnLabel = document.createElement("label");
+          lnLabel.className = "form-label";
+          lnLabel.textContent = "Surname*";
+          lnGroup.appendChild(lnLabel);
+          var lnInput = document.createElement("input");
+          lnInput.className = "form-input";
+          lnInput.type = "text";
+          lnInput.value = customerInfo.lastName;
+          lnInput.addEventListener("input", function () {
+            customerInfo.lastName = this.value;
+          });
+          lnGroup.appendChild(lnInput);
+          nameRow.appendChild(lnGroup);
+
+          content.appendChild(nameRow);
+
+          var buttons = document.createElement("div");
+          buttons.className = "form-buttons";
+
+          var backBtn = document.createElement("button");
+          backBtn.className = "btn btn-secondary";
+          backBtn.innerHTML = "&laquo; Back";
+          backBtn.addEventListener("click", function () {
+            openCartView();
+          });
+          buttons.appendChild(backBtn);
+
+          var nextBtn = document.createElement("button");
+          nextBtn.className = "btn btn-primary";
+          nextBtn.innerHTML = "Next &raquo;";
+          nextBtn.addEventListener("click", function () {
+            if (!customerInfo.email) return;
+            if (customerInfo.email !== customerInfo.emailRepeat) return;
+            if (!customerInfo.firstName || !customerInfo.lastName) return;
+            openPaymentView();
+          });
+          buttons.appendChild(nextBtn);
+
+          content.appendChild(buttons);
+        }
+
+        function openPaymentView() {
+          showView("paymentView");
+          renderPaymentView();
+        }
+
+        function renderPaymentView() {
+          var progressContainer = document.getElementById("paymentProgress");
+          progressContainer.innerHTML = "";
+          progressContainer.appendChild(renderProgressBar(3));
+
+          var content = document.getElementById("paymentContent");
+          content.innerHTML = "";
+
+          var title = document.createElement("h2");
+          title.className = "payment-title";
+          title.textContent = "Payment";
+          content.appendChild(title);
+
+          var summary = document.createElement("div");
+          summary.className = "payment-summary";
+
+          var totalRow = document.createElement("div");
+          totalRow.className = "payment-summary-total";
+          var totLabel = document.createElement("span");
+          totLabel.textContent = "Total Amount Due";
+          totalRow.appendChild(totLabel);
+          var totVal = document.createElement("span");
+          totVal.className = "amount";
+          totVal.textContent = formatPrice(calculateTotal());
+          totalRow.appendChild(totVal);
+          summary.appendChild(totalRow);
+          content.appendChild(summary);
+
+          var qrSection = document.createElement("div");
+          qrSection.className = "qr-section";
+          var qrTitle = document.createElement("div");
+          qrTitle.className = "qr-title";
+          qrTitle.textContent = "Scan QR Code to Pay";
+          qrSection.appendChild(qrTitle);
+          var qrPlaceholder = document.createElement("div");
+          qrPlaceholder.className = "qr-placeholder";
+          qrPlaceholder.textContent = "QR Code Here";
+          qrSection.appendChild(qrPlaceholder);
+          content.appendChild(qrSection);
+
+          var buttons = document.createElement("div");
+          buttons.className = "form-buttons";
+
+          var backBtn = document.createElement("button");
+          backBtn.className = "btn btn-secondary";
+          backBtn.innerHTML = "&laquo; Back";
+          backBtn.addEventListener("click", function () {
+            openAddressView();
+          });
+          buttons.appendChild(backBtn);
+
+          var completeBtn = document.createElement("button");
+          completeBtn.className = "btn btn-primary";
+          completeBtn.textContent = "Complete Booking";
+          completeBtn.addEventListener("click", submitBooking);
+          buttons.appendChild(completeBtn);
+
+          content.appendChild(buttons);
+        }
+
+        function submitBooking() {
+          var payload = {
+            userId: userID,
+            email: customerInfo.email,
+            firstName: customerInfo.firstName,
+            lastName: customerInfo.lastName,
+            seatIds: activeHoldSeatIds,
+            totalAmount: Number(calculateTotal().toFixed(2)),
+            ticketCounts: ticketCounts
+          };
+          api("POST", "/screenings/" + selectedScreening.screening_id + "/confirm", payload)
+            .then(function () {
+              activeHoldSeatIds = [];
+              showSuccessView();
+            })
+            .catch(function (err) {
+              alert("Booking failed: " + err.message);
+            });
+        }
+
+        function showSuccessView() {
+          showView("successView");
+          var text = document.getElementById("successText");
+          text.textContent = "Your booking for " + selectedMovie.title + " has been confirmed. " +
+            "Ticket details have been sent to " + customerInfo.email + ".";
+        }
+
+        function openAdminBookingsView() {
+          releaseAllSeats();
+          if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+          }
+          showView("adminBookingsView");
+          switchAdminTab(adminActiveTab);
+        }
+
+        function switchAdminTab(tabName) {
+          adminActiveTab = tabName;
+          var tabs = document.querySelectorAll("[data-admin-tab]");
+          for (var i = 0; i < tabs.length; i++) {
+            var isActive = tabs[i].getAttribute("data-admin-tab") === tabName;
+            tabs[i].className = isActive ? "admin-tab active" : "admin-tab";
+          }
+
+          var sections = {
+            dashboard: "adminDashboardSection",
+            bookings: "adminBookingsSection",
+            movies: "adminMoviesSection",
+            screenings: "adminScreeningsSection",
+            prices: "adminPricesSection"
+          };
+          for (var key in sections) {
+            document.getElementById(sections[key]).className = key === tabName ? "admin-section active" : "admin-section";
+          }
+          setAdminStatus("");
+
+          if (tabName === "dashboard") renderAdminDashboard();
+          if (tabName === "bookings") renderAdminBookingsTab();
+          if (tabName === "movies") renderAdminMovies();
+          if (tabName === "screenings") renderAdminScreenings();
+          if (tabName === "prices") renderAdminPrices();
+        }
+
+        function setAdminStatus(message, type) {
+          var status = document.getElementById("adminStatus");
+          status.textContent = message || "";
+          status.className = message ? "status-msg " + (type || "success") : "";
+        }
+
+        function renderAdminDashboard() {
+          var section = document.getElementById("adminDashboardSection");
+          section.textContent = "Loading dashboard...";
+          api("GET", "/admin/reports/revenue")
+            .then(function (report) {
+              section.innerHTML = "";
+              var stats = document.createElement("div");
+              stats.className = "admin-grid";
+              stats.appendChild(renderAdminStat("Total revenue", formatPrice(Number(report.totalRevenue))));
+              stats.appendChild(renderAdminStat("Confirmed bookings", report.confirmedBookings));
+              stats.appendChild(renderAdminStat("Held seats", report.heldSeats));
+              section.appendChild(stats);
+
+              var list = document.createElement("div");
+              list.className = "admin-list";
+              var title = document.createElement("h2");
+              title.className = "form-title";
+              title.textContent = "Revenue by movie";
+              section.appendChild(title);
+
+              if (!report.revenueByMovie || report.revenueByMovie.length === 0) {
+                var empty = document.createElement("div");
+                empty.className = "admin-booking-item";
+                empty.textContent = "No confirmed revenue yet.";
+                list.appendChild(empty);
+              } else {
+                for (var i = 0; i < report.revenueByMovie.length; i++) {
+                  var row = report.revenueByMovie[i];
+                  var item = document.createElement("div");
+                  item.className = "admin-booking-item";
+                  var heading = document.createElement("div");
+                  heading.className = "admin-booking-title";
+                  heading.textContent = row.movieTitle;
+                  item.appendChild(heading);
+                  addAdminDetail(item, "Revenue: " + formatPrice(Number(row.revenue)));
+                  list.appendChild(item);
+                }
+              }
+              section.appendChild(list);
+            })
+            .catch(function (err) {
+              section.textContent = err.message;
+            });
+        }
+
+        function renderAdminStat(label, value) {
+          var stat = document.createElement("div");
+          stat.className = "admin-stat";
+          var labelEl = document.createElement("div");
+          labelEl.className = "admin-stat-label";
+          labelEl.textContent = label;
+          stat.appendChild(labelEl);
+          var valueEl = document.createElement("div");
+          valueEl.className = "admin-stat-value";
+          valueEl.textContent = value;
+          stat.appendChild(valueEl);
+          return stat;
+        }
+
+        function renderAdminBookingsTab() {
+          var content = document.getElementById("adminBookingsContent");
+          content.textContent = "Loading bookings...";
+          api("GET", "/admin/bookings")
+            .then(function (bookings) {
+              api("GET", "/admin/held-seats")
+                .then(function (holds) {
+                  renderAdminBookings(bookings, holds);
+                })
+                .catch(function (err) {
+                  content.textContent = err.message;
+                });
+            })
+            .catch(function (err) {
+              content.textContent = err.message;
+            });
+        }
+
+        function renderAdminBookings(bookings, holds) {
+          var content = document.getElementById("adminBookingsContent");
+          content.innerHTML = "";
+
+          if (!holds) {
+            holds = [];
+          }
+
+          if (bookings.length === 0 && holds.length === 0) {
+            content.textContent = "No confirmed bookings or held seats.";
+            return;
+          }
+
+          if (holds.length > 0) {
+            content.appendChild(renderHeldSeats(holds));
+          }
+
+          if (bookings.length === 0) {
+            var emptyBookings = document.createElement("p");
+            emptyBookings.textContent = "No confirmed bookings.";
+            content.appendChild(emptyBookings);
+            return;
+          }
+
+          for (var i = 0; i < bookings.length; i++) {
+            content.appendChild(renderAdminBooking(bookings[i]));
+          }
+        }
+
+        function renderHeldSeats(holds) {
+          var item = document.createElement("div");
+          item.className = "admin-booking-item";
+
+          var title = document.createElement("div");
+          title.className = "admin-booking-title";
+          title.textContent = "Held seats (" + holds.length + ")";
+          item.appendChild(title);
+
+          var detail = document.createElement("div");
+          detail.className = "admin-booking-detail";
+          addAdminDetail(detail, "These seats are temporary holds, not confirmed bookings.");
+          for (var i = 0; i < holds.length; i++) {
+            var hold = holds[i];
+            addAdminDetail(detail, hold.movieTitle + " - " + hold.screeningDate + " " + hold.screeningTime + " - Seat " + hold.seatId + " - user " + hold.userId);
+          }
+          item.appendChild(detail);
+
+          var releaseBtn = document.createElement("button");
+          releaseBtn.className = "btn btn-danger";
+          releaseBtn.style.marginTop = "1rem";
+          releaseBtn.textContent = "Release Held Seats";
+          releaseBtn.addEventListener("click", releaseHeldSeats);
+          item.appendChild(releaseBtn);
+
+          return item;
+        }
+
+        function renderAdminBooking(booking) {
+          var item = document.createElement("div");
+          item.className = "admin-booking-item";
+
+          var title = document.createElement("div");
+          title.className = "admin-booking-title";
+          title.textContent = "#" + booking.id + " - " + booking.movieTitle;
+          item.appendChild(title);
+
+          var detail = document.createElement("div");
+          detail.className = "admin-booking-detail";
+          addAdminDetail(detail, "Customer: " + booking.customerName + " (" + booking.customerEmail + ")");
+          addAdminDetail(detail, "Time: " + booking.screeningDate + " " + booking.screeningTime);
+          addAdminDetail(detail, "Seats: " + booking.seatIds.join(", "));
+          addAdminDetail(detail, "Total: " + formatPrice(Number(booking.totalAmount)));
+          item.appendChild(detail);
+
+          var deleteBtn = document.createElement("button");
+          deleteBtn.className = "btn btn-danger";
+          deleteBtn.style.marginTop = "1rem";
+          deleteBtn.textContent = "Delete Booking";
+          deleteBtn.addEventListener("click", function () {
+            deleteAdminBooking(booking.id);
+          });
+          item.appendChild(deleteBtn);
+
+          return item;
+        }
+
+        function addAdminDetail(parent, text) {
+          var line = document.createElement("div");
+          line.textContent = text;
+          parent.appendChild(line);
+        }
+
+        function deleteAdminBooking(bookingId) {
+          if (!confirm("Delete booking #" + bookingId + " and release its seats?")) {
+            return;
+          }
+          api("DELETE", "/admin/bookings/" + bookingId)
+            .then(openAdminBookingsView)
+            .catch(function (err) {
+              alert(err.message);
+            });
+        }
+
+        function releaseHeldSeats() {
+          if (!confirm("Release all held seats?")) {
+            return;
+          }
+          api("DELETE", "/admin/held-seats")
+            .then(function (result) {
+              alert("Released " + result.released + " held seat(s).");
+              openAdminBookingsView();
+            })
+            .catch(function (err) {
+              alert(err.message);
+            });
+        }
+
+        function renderAdminMovies() {
+          var section = document.getElementById("adminMoviesSection");
+          section.textContent = "Loading movies...";
+          api("GET", "/admin/movies")
+            .then(function (data) {
+              adminMoviesCache = data;
+              renderAdminMovieSection();
+            })
+            .catch(function (err) {
+              section.textContent = err.message;
+            });
+        }
+
+        function renderAdminMovieSection() {
+          var section = document.getElementById("adminMoviesSection");
+          section.innerHTML = "";
+          section.appendChild(renderAdminMovieForm());
+
+          var list = document.createElement("div");
+          list.className = "admin-list";
+          for (var i = 0; i < adminMoviesCache.length; i++) {
+            list.appendChild(renderAdminMovieItem(adminMoviesCache[i]));
+          }
+          if (adminMoviesCache.length === 0) {
+            var empty = document.createElement("div");
+            empty.className = "admin-booking-item";
+            empty.textContent = "No movies yet.";
+            list.appendChild(empty);
+          }
+          section.appendChild(list);
+        }
+
+        function renderAdminMovieForm() {
+          var editing = findAdminMovie(adminMovieEditingId);
+          var form = document.createElement("div");
+          form.className = "admin-form";
+          var title = document.createElement("div");
+          title.className = "admin-form-title";
+          title.textContent = editing ? "Edit movie" : "Add movie";
+          form.appendChild(title);
+
+          addAdminInput(form, "adminMovieId", "Movie ID", editing ? editing.id : "", "text", editing ? true : false);
+          addAdminInput(form, "adminMovieTitle", "Title*", editing ? editing.title : "", "text");
+          addAdminInput(form, "adminMovieGenre", "Genre", editing ? editing.genre : "", "text");
+          addAdminInput(form, "adminMovieDuration", "Duration minutes*", editing ? editing.duration : "", "number");
+          addAdminInput(form, "adminMovieRating", "Rating", editing ? editing.rating : "", "text");
+          addAdminInput(form, "adminMovieYear", "Release year*", editing ? editing.year : "", "number");
+          addAdminInput(form, "adminMovieRows", "Rows*", editing ? editing.rows : "5", "number");
+          addAdminInput(form, "adminMovieSeats", "Seats per row*", editing ? editing.seats_per_row : "8", "number");
+          addAdminInput(form, "adminMoviePoster", "Poster URL", editing ? editing.poster_url : "/posters/poster_inception.png", "text");
+          addAdminTextarea(form, "adminMovieSynopsis", "Synopsis", editing ? editing.synopsis : "");
+
+          var actions = document.createElement("div");
+          actions.className = "admin-actions";
+          var saveBtn = document.createElement("button");
+          saveBtn.className = "btn btn-primary";
+          saveBtn.textContent = editing ? "Save movie" : "Create movie";
+          saveBtn.addEventListener("click", saveAdminMovie);
+          actions.appendChild(saveBtn);
+
+          var clearBtn = document.createElement("button");
+          clearBtn.className = "btn btn-secondary";
+          clearBtn.textContent = "Clear";
+          clearBtn.addEventListener("click", function () {
+            adminMovieEditingId = null;
+            renderAdminMovieSection();
+          });
+          actions.appendChild(clearBtn);
+          form.appendChild(actions);
+          return form;
+        }
+
+        function renderAdminMovieItem(movie) {
+          var item = document.createElement("div");
+          item.className = "admin-booking-item";
+          var title = document.createElement("div");
+          title.className = "admin-booking-title";
+          title.textContent = movie.title + " (" + movie.year + ")";
+          item.appendChild(title);
+          addAdminDetail(item, "ID: " + movie.id);
+          addAdminDetail(item, "Genre: " + movie.genre + " | Rating: " + movie.rating + " | Duration: " + movie.duration + " min");
+          addAdminDetail(item, "Seat layout: " + movie.rows + " rows x " + movie.seats_per_row + " seats");
+          addAdminDetail(item, "Screenings: " + (movie.screenings ? movie.screenings.length : 0));
+
+          var actions = document.createElement("div");
+          actions.className = "admin-actions";
+          var editBtn = document.createElement("button");
+          editBtn.className = "btn btn-secondary";
+          editBtn.textContent = "Edit";
+          editBtn.addEventListener("click", function () {
+            adminMovieEditingId = movie.id;
+            renderAdminMovieSection();
+          });
+          actions.appendChild(editBtn);
+
+          var deleteBtn = document.createElement("button");
+          deleteBtn.className = "btn btn-danger";
+          deleteBtn.textContent = "Delete";
+          deleteBtn.addEventListener("click", function () {
+            deleteAdminMovie(movie.id);
+          });
+          actions.appendChild(deleteBtn);
+          item.appendChild(actions);
+          return item;
+        }
+
+        function saveAdminMovie() {
+          var editing = !!adminMovieEditingId;
+          var payload = {
+            id: readAdminValue("adminMovieId"),
+            title: readAdminValue("adminMovieTitle"),
+            genre: readAdminValue("adminMovieGenre"),
+            duration: Number(readAdminValue("adminMovieDuration")),
+            rating: readAdminValue("adminMovieRating"),
+            year: Number(readAdminValue("adminMovieYear")),
+            rows: Number(readAdminValue("adminMovieRows")),
+            seats_per_row: Number(readAdminValue("adminMovieSeats")),
+            poster_url: readAdminValue("adminMoviePoster"),
+            synopsis: readAdminValue("adminMovieSynopsis")
+          };
+
+          var method = editing ? "PUT" : "POST";
+          var path = editing ? "/admin/movies/" + encodeURIComponent(adminMovieEditingId) : "/admin/movies";
+          api(method, path, payload)
+            .then(function () {
+              setAdminStatus(editing ? "Movie updated." : "Movie created.", "success");
+              adminMovieEditingId = null;
+              loadMovies("");
+              renderAdminMovies();
+            })
+            .catch(function (err) {
+              setAdminStatus(err.message, "error");
+            });
+        }
+
+        function deleteAdminMovie(movieId) {
+          if (!confirm("Delete movie " + movieId + "? Screenings must be deleted first.")) return;
+          api("DELETE", "/admin/movies/" + encodeURIComponent(movieId))
+            .then(function () {
+              setAdminStatus("Movie deleted.", "success");
+              loadMovies("");
+              renderAdminMovies();
+            })
+            .catch(function (err) {
+              setAdminStatus(err.message, "error");
+            });
+        }
+
+        function renderAdminScreenings() {
+          var section = document.getElementById("adminScreeningsSection");
+          section.textContent = "Loading screenings...";
+          api("GET", "/admin/movies")
+            .then(function (moviesData) {
+              adminMoviesCache = moviesData;
+              api("GET", "/admin/screenings")
+                .then(function (screeningData) {
+                  adminScreeningsCache = screeningData;
+                  renderAdminScreeningSection();
+                })
+                .catch(function (err) {
+                  section.textContent = err.message;
+                });
+            })
+            .catch(function (err) {
+              section.textContent = err.message;
+            });
+        }
+
+        function renderAdminScreeningSection() {
+          var section = document.getElementById("adminScreeningsSection");
+          section.innerHTML = "";
+          section.appendChild(renderAdminScreeningForm());
+
+          var list = document.createElement("div");
+          list.className = "admin-list";
+          for (var i = 0; i < adminScreeningsCache.length; i++) {
+            list.appendChild(renderAdminScreeningItem(adminScreeningsCache[i]));
+          }
+          if (adminScreeningsCache.length === 0) {
+            var empty = document.createElement("div");
+            empty.className = "admin-booking-item";
+            empty.textContent = "No screenings yet.";
+            list.appendChild(empty);
+          }
+          section.appendChild(list);
+        }
+
+        function renderAdminScreeningForm() {
+          var editing = findAdminScreening(adminScreeningEditingId);
+          var form = document.createElement("div");
+          form.className = "admin-form";
+          var title = document.createElement("div");
+          title.className = "admin-form-title";
+          title.textContent = editing ? "Edit screening" : "Add screening";
+          form.appendChild(title);
+
+          addAdminMovieSelect(form, "adminScreeningMovie", "Movie*", editing ? editing.movieId : "", editing ? true : false);
+          addAdminInput(form, "adminScreeningDate", "Date*", editing ? editing.screeningDate : "", "date");
+          addAdminInput(form, "adminScreeningLabel", "Date label", editing ? editing.dateLabel : "", "text");
+          addAdminInput(form, "adminScreeningTime", "Time*", editing ? editing.screeningTime : "", "time");
+          addAdminInput(form, "adminScreeningHall", "Hall*", editing ? editing.hall : "Hall 1", "text");
+          addAdminInput(form, "adminScreeningFormat", "Format", editing ? editing.format : "2D", "text");
+
+          var actions = document.createElement("div");
+          actions.className = "admin-actions";
+          var saveBtn = document.createElement("button");
+          saveBtn.className = "btn btn-primary";
+          saveBtn.textContent = editing ? "Save screening" : "Create screening";
+          saveBtn.addEventListener("click", saveAdminScreening);
+          actions.appendChild(saveBtn);
+
+          var clearBtn = document.createElement("button");
+          clearBtn.className = "btn btn-secondary";
+          clearBtn.textContent = "Clear";
+          clearBtn.addEventListener("click", function () {
+            adminScreeningEditingId = null;
+            renderAdminScreeningSection();
+          });
+          actions.appendChild(clearBtn);
+          form.appendChild(actions);
+          return form;
+        }
+
+        function renderAdminScreeningItem(screening) {
+          var item = document.createElement("div");
+          item.className = "admin-booking-item";
+          var title = document.createElement("div");
+          title.className = "admin-booking-title";
+          title.textContent = screening.movieTitle + " - " + screening.screeningDate + " " + screening.screeningTime;
+          item.appendChild(title);
+          addAdminDetail(item, "Hall: " + screening.hall + " | Format: " + screening.format);
+          addAdminDetail(item, "Seats: " + screening.seatsTotal + " total, " + screening.seatsHeld + " held, " + screening.seatsBooked + " booked");
+
+          var actions = document.createElement("div");
+          actions.className = "admin-actions";
+          var editBtn = document.createElement("button");
+          editBtn.className = "btn btn-secondary";
+          editBtn.textContent = "Edit";
+          editBtn.addEventListener("click", function () {
+            adminScreeningEditingId = screening.id;
+            renderAdminScreeningSection();
+          });
+          actions.appendChild(editBtn);
+
+          var deleteBtn = document.createElement("button");
+          deleteBtn.className = "btn btn-danger";
+          deleteBtn.textContent = "Delete";
+          deleteBtn.addEventListener("click", function () {
+            deleteAdminScreening(screening.id);
+          });
+          actions.appendChild(deleteBtn);
+          item.appendChild(actions);
+          return item;
+        }
+
+        function saveAdminScreening() {
+          var editing = !!adminScreeningEditingId;
+          var payload = {
+            movieId: readAdminValue("adminScreeningMovie"),
+            screeningDate: readAdminValue("adminScreeningDate"),
+            dateLabel: readAdminValue("adminScreeningLabel"),
+            screeningTime: readAdminValue("adminScreeningTime"),
+            hall: readAdminValue("adminScreeningHall"),
+            format: readAdminValue("adminScreeningFormat")
+          };
+
+          var method = editing ? "PUT" : "POST";
+          var path = editing ? "/admin/screenings/" + adminScreeningEditingId : "/admin/screenings";
+          api(method, path, payload)
+            .then(function () {
+              setAdminStatus(editing ? "Screening updated." : "Screening created.", "success");
+              adminScreeningEditingId = null;
+              loadMovies("");
+              renderAdminScreenings();
+            })
+            .catch(function (err) {
+              setAdminStatus(err.message, "error");
+            });
+        }
+
+        function deleteAdminScreening(screeningId) {
+          if (!confirm("Delete screening #" + screeningId + "? It must have no booking history.")) return;
+          api("DELETE", "/admin/screenings/" + screeningId)
+            .then(function () {
+              setAdminStatus("Screening deleted.", "success");
+              loadMovies("");
+              renderAdminScreenings();
+            })
+            .catch(function (err) {
+              setAdminStatus(err.message, "error");
+            });
+        }
+
+        function renderAdminPrices() {
+          var section = document.getElementById("adminPricesSection");
+          section.textContent = "Loading ticket prices...";
+          api("GET", "/admin/ticket-prices")
+            .then(function (prices) {
+              section.innerHTML = "";
+              var form = document.createElement("div");
+              form.className = "admin-form";
+              var title = document.createElement("div");
+              title.className = "admin-form-title";
+              title.textContent = "Ticket prices";
+              form.appendChild(title);
+
+              for (var i = 0; i < prices.length; i++) {
+                var row = document.createElement("div");
+                row.className = "form-row";
+                var group = document.createElement("div");
+                group.className = "form-group";
+                var label = document.createElement("label");
+                label.className = "form-label";
+                label.textContent = prices[i].label;
+                group.appendChild(label);
+                var input = document.createElement("input");
+                input.className = "form-input";
+                input.type = "number";
+                input.step = "0.01";
+                input.min = "0";
+                input.id = "adminPrice_" + prices[i].code;
+                input.value = Number(prices[i].amount).toFixed(2);
+                group.appendChild(input);
+                row.appendChild(group);
+
+                var actions = document.createElement("div");
+                actions.className = "admin-actions";
+                var saveBtn = document.createElement("button");
+                saveBtn.className = "btn btn-primary";
+                saveBtn.textContent = "Save";
+                (function (code) {
+                  saveBtn.addEventListener("click", function () {
+                    saveAdminPrice(code);
+                  });
+                })(prices[i].code);
+                actions.appendChild(saveBtn);
+                row.appendChild(actions);
+                form.appendChild(row);
+              }
+              section.appendChild(form);
+            })
+            .catch(function (err) {
+              section.textContent = err.message;
+            });
+        }
+
+        function saveAdminPrice(code) {
+          var amount = Number(readAdminValue("adminPrice_" + code));
+          api("PUT", "/admin/ticket-prices/" + encodeURIComponent(code), { amount: amount })
+            .then(function () {
+              setAdminStatus("Ticket price updated.", "success");
+              loadTicketPrices().then(function () {
+                renderAdminPrices();
+              });
+            })
+            .catch(function (err) {
+              setAdminStatus(err.message, "error");
+            });
+        }
+
+        function addAdminInput(parent, id, labelText, value, type, disabled) {
+          var row = document.createElement("div");
+          row.className = "form-row";
+          var group = document.createElement("div");
+          group.className = "form-group";
+          var label = document.createElement("label");
+          label.className = "form-label";
+          label.textContent = labelText;
+          group.appendChild(label);
+          var input = document.createElement("input");
+          input.id = id;
+          input.className = "form-input";
+          input.type = type || "text";
+          input.value = value == null ? "" : value;
+          input.disabled = !!disabled;
+          group.appendChild(input);
+          row.appendChild(group);
+          parent.appendChild(row);
+        }
+
+        function addAdminTextarea(parent, id, labelText, value) {
+          var row = document.createElement("div");
+          row.className = "form-row";
+          var group = document.createElement("div");
+          group.className = "form-group";
+          var label = document.createElement("label");
+          label.className = "form-label";
+          label.textContent = labelText;
+          group.appendChild(label);
+          var input = document.createElement("textarea");
+          input.id = id;
+          input.className = "form-input";
+          input.rows = 4;
+          input.value = value == null ? "" : value;
+          group.appendChild(input);
+          row.appendChild(group);
+          parent.appendChild(row);
+        }
+
+        function addAdminMovieSelect(parent, id, labelText, value, disabled) {
+          var row = document.createElement("div");
+          row.className = "form-row";
+          var group = document.createElement("div");
+          group.className = "form-group";
+          var label = document.createElement("label");
+          label.className = "form-label";
+          label.textContent = labelText;
+          group.appendChild(label);
+          var select = document.createElement("select");
+          select.id = id;
+          select.className = "form-input";
+          select.disabled = !!disabled;
+          for (var i = 0; i < adminMoviesCache.length; i++) {
+            var option = document.createElement("option");
+            option.value = adminMoviesCache[i].id;
+            option.textContent = adminMoviesCache[i].title;
+            if (adminMoviesCache[i].id === value) {
+              option.selected = true;
+            }
+            select.appendChild(option);
+          }
+          group.appendChild(select);
+          row.appendChild(group);
+          parent.appendChild(row);
+        }
+
+        function readAdminValue(id) {
+          var el = document.getElementById(id);
+          return el ? el.value.trim() : "";
+        }
+
+        function findAdminMovie(movieId) {
+          if (!movieId) return null;
+          for (var i = 0; i < adminMoviesCache.length; i++) {
+            if (adminMoviesCache[i].id === movieId) return adminMoviesCache[i];
+          }
+          return null;
+        }
+
+        function findAdminScreening(screeningId) {
+          if (!screeningId) return null;
+          for (var i = 0; i < adminScreeningsCache.length; i++) {
+            if (adminScreeningsCache[i].id === screeningId) return adminScreeningsCache[i];
+          }
+          return null;
+        }
+
+        function resetAll() {
+          releaseAllSeats();
+          selectedMovie = null;
+          selectedScreening = null;
+          selectedDateFilter = null;
+          activeHoldSeatIds = [];
+          if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+          }
+          resetTicketCounts(1);
+          ageConfirmed = false;
+          customerInfo = {
+            email: "",
+            emailRepeat: "",
+            firstName: "",
+            lastName: ""
+          };
+          loadMovies("");
+          showView("movieGridView");
+        }
+
+
+        var isLoginMode = true;
+
+        function updateAuthModal() {
+            document.getElementById("authModalTitle").textContent = isLoginMode ? "Login" : "Register";
+            document.getElementById("loginSubmitBtn").textContent = isLoginMode ? "Login" : "Register";
+            document.getElementById("authModeToggle").textContent = isLoginMode ? "Don't have an account? Register" : "Already have an account? Login";
+            document.getElementById("loginError").style.display = "none";
+        }
+
+        document.getElementById("authModeToggle").addEventListener("click", function(e) {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            updateAuthModal();
+        });
+
+        document.getElementById("headerLoginBtn").addEventListener("click", function() {
+          document.getElementById("loginModalBackdrop").style.display = "flex";
+          isLoginMode = true;
+          updateAuthModal();
+          document.getElementById("loginUsername").value = "";
+          document.getElementById("loginPassword").value = "";
+        });
+
+        document.getElementById("loginCancelBtn").addEventListener("click", function() {
+          document.getElementById("loginModalBackdrop").style.display = "none";
+        });
+
+        document.getElementById("loginSubmitBtn").addEventListener("click", function() {
+          var u = document.getElementById("loginUsername").value;
+          var p = document.getElementById("loginPassword").value;
+          var endpoint = isLoginMode ? "/auth/login" : "/auth/register";
+          
+          api("POST", endpoint, { username: u, password: p })
+            .then(function(res) {
+              if (res.success) {
+                localStorage.setItem("cinema_is_admin", res.role === "ADMIN" ? "true" : "false");
+                localStorage.setItem("cinema_user_id", res.userId);
+                localStorage.setItem("cinema_username", res.username);
+                window.location.reload();
+              }
+            })
+            .catch(function(err) {
+              document.getElementById("loginError").textContent = err.message || "Authentication failed";
+              document.getElementById("loginError").style.display = "block";
+            });
+        });
+        document.getElementById("headerLogo").addEventListener("click", resetAll);
+        document.getElementById("adminBookingsBtn").addEventListener("click", openAdminBookingsView);
+        document.getElementById("adminBackToMovies").addEventListener("click", resetAll);
+        var adminTabButtons = document.querySelectorAll("[data-admin-tab]");
+        for (var tabIndex = 0; tabIndex < adminTabButtons.length; tabIndex++) {
+          adminTabButtons[tabIndex].addEventListener("click", function () {
+            switchAdminTab(this.getAttribute("data-admin-tab"));
+          });
+        }
+
+        document.getElementById("backToGrid").addEventListener("click", resetAll);
+
+        document.getElementById("backToDetail").addEventListener("click", function () {
+          if (activeHoldSeatIds.length > 0) {
+            releaseAllSeats();
+          }
+          if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+          }
+          activeHoldSeatIds = [];
+          showView("movieDetailView");
+        });
+
+        document.getElementById("backToHome").addEventListener("click", resetAll);
+        
+        document.getElementById("searchBtn").addEventListener("click", function () {
+          var val = document.getElementById("searchInput").value;
+          loadMovies(val);
+        });
+
+        loadTicketPrices().then(function () {
+          loadMovies("");
+        });
+      })();
+    </script>
+  </body>
+</html>

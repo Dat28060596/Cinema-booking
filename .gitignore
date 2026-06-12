@@ -1,0 +1,26 @@
+# Maven build output
+target/
+
+# H2 embedded database files (runtime, auto-recreated on startup)
+*.mv.db
+*.trace.db
+
+# Gradle (build tool directories and caches)
+.gradle/
+build/
+gradle-*/
+gradle-bin/
+
+# IDE / editor
+.idea/
+*.iml
+.vscode/
+*.class
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Agent / tool files (not part of the project)
+.agents/
+skills-lock.json
