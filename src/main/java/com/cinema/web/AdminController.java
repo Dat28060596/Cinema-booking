@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
@@ -85,6 +86,25 @@ public class AdminController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/admin/bookings/search")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> searchBookings(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestParam(defaultValue = "") String query) {
+        if (!isAdmin(userId)) {
+            return adminForbidden();
+        }
+
+        String q = normalizeQuery(query);
+        List<AdminBookingResponse> responses = new ArrayList<>();
+        for (Booking booking : bookingService.listConfirmedBookings()) {
+            if (q.isBlank() || matchesBooking(booking, q)) {
+                responses.add(toResponse(booking));
+            }
+        }
+        return ResponseEntity.ok(responses);
+    }
+
     @DeleteMapping("/admin/bookings/{bookingId}")
     public ResponseEntity<?> deleteBooking(
             @RequestHeader("X-User-Id") String userId,
@@ -108,6 +128,25 @@ public class AdminController {
         List<AdminSeatHoldResponse> responses = new ArrayList<>();
         for (Seat seat : bookingService.listHeldSeats()) {
             responses.add(toResponse(seat));
+        }
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/admin/held-seats/search")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> searchHeldSeats(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestParam(defaultValue = "") String query) {
+        if (!isAdmin(userId)) {
+            return adminForbidden();
+        }
+
+        String q = normalizeQuery(query);
+        List<AdminSeatHoldResponse> responses = new ArrayList<>();
+        for (Seat seat : bookingService.listHeldSeats()) {
+            if (q.isBlank() || matchesHeldSeat(seat, q)) {
+                responses.add(toResponse(seat));
+            }
         }
         return ResponseEntity.ok(responses);
     }
@@ -234,6 +273,25 @@ public class AdminController {
         List<AdminScreeningResponse> responses = new ArrayList<>();
         for (Screening screening : screeningRepo.findAll()) {
             responses.add(toAdminScreeningResponse(screening));
+        }
+        return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/admin/screenings/search")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> searchScreenings(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestParam(defaultValue = "") String query) {
+        if (!isAdmin(userId)) {
+            return adminForbidden();
+        }
+
+        String q = normalizeQuery(query);
+        List<AdminScreeningResponse> responses = new ArrayList<>();
+        for (Screening screening : screeningRepo.findAll()) {
+            if (q.isBlank() || matchesScreening(screening, q)) {
+                responses.add(toAdminScreeningResponse(screening));
+            }
         }
         return ResponseEntity.ok(responses);
     }
@@ -440,6 +498,52 @@ public class AdminController {
         );
     }
 
+    private boolean matchesBooking(Booking booking, String query) {
+        CustomerFields customer = customerFields(booking);
+        if (containsIgnoreCase(String.valueOf(booking.getId()), query)
+                || containsIgnoreCase(customer.fullName(), query)
+                || containsIgnoreCase(customer.email(), query)
+                || containsIgnoreCase(booking.getScreening().getMovie().getTitle(), query)
+                || containsIgnoreCase(booking.getScreening().getScreeningDate().toString(), query)
+                || containsIgnoreCase(booking.getScreening().getScreeningTime(), query)
+                || containsIgnoreCase(booking.getStatus().name(), query)
+                || containsIgnoreCase(booking.getTotalAmount().toPlainString(), query)) {
+            return true;
+        }
+
+        for (Ticket ticket : booking.getTickets()) {
+            if (containsIgnoreCase(ticket.getSeat().getSeatId(), query)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean matchesHeldSeat(Seat seat, String query) {
+        Screening screening = seat.getScreening();
+        return containsIgnoreCase(screening.getMovie().getTitle(), query)
+                || containsIgnoreCase(screening.getScreeningDate().toString(), query)
+                || containsIgnoreCase(screening.getScreeningTime(), query)
+                || containsIgnoreCase(seat.getSeatId(), query)
+                || containsIgnoreCase(seat.getHeldBySessionId(), query);
+    }
+
+    private boolean matchesScreening(Screening screening, String query) {
+        return containsIgnoreCase(String.valueOf(screening.getId()), query)
+                || containsIgnoreCase(screening.getMovie().getTitle(), query)
+                || containsIgnoreCase(screening.getScreeningDate().toString(), query)
+                || containsIgnoreCase(screening.getDateLabel(), query)
+                || containsIgnoreCase(screening.getScreeningTime(), query)
+                || containsIgnoreCase(screening.getHall(), query)
+                || containsIgnoreCase(screening.getFormat(), query);
+    }
+
+    private CustomerFields customerFields(Booking booking) {
+        String firstName = cleanOptional(booking.getCustomer().getFirstName());
+        String lastName = cleanOptional(booking.getCustomer().getLastName());
+        return new CustomerFields((firstName + " " + lastName).trim(), cleanOptional(booking.getCustomer().getEmail()));
+    }
+
     private AdminSeatHoldResponse toResponse(Seat seat) {
         return new AdminSeatHoldResponse(
                 seat.getScreening().getId(),
@@ -570,5 +674,16 @@ public class AdminController {
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private String normalizeQuery(String query) {
+        return query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private boolean containsIgnoreCase(String value, String query) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(query);
+    }
+
+    private record CustomerFields(String fullName, String email) {
     }
 }

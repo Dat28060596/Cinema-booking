@@ -1166,7 +1166,7 @@
         <h1 class="screen-title">Now Showing</h1>
         <p class="screen-subtitle">Select a movie to view screenings and book tickets</p>
         <div class="search-bar">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search by title or genre..." />
+          <input type="text" id="searchInput" class="search-input" placeholder="Search movies, genres, dates, times, halls..." />
           <button class="btn btn-primary" id="searchBtn" style="width: auto;">Search</button>
         </div>
         <div class="movie-grid" id="movieGrid"></div>
@@ -1248,6 +1248,10 @@
         <div id="adminStatus"></div>
         <div class="admin-section active" id="adminDashboardSection"></div>
         <div class="admin-section" id="adminBookingsSection">
+          <div class="search-bar">
+            <input type="text" id="adminBookingSearchInput" class="search-input" placeholder="Search bookings by customer, movie, date, seat..." />
+            <button class="btn btn-primary" id="adminBookingSearchBtn" style="width: auto;">Search</button>
+          </div>
           <div class="admin-booking-list" id="adminBookingsContent"></div>
         </div>
         <div class="admin-section" id="adminMoviesSection"></div>
@@ -1316,6 +1320,8 @@
         var adminActiveTab = "dashboard";
         var adminMovieEditingId = null;
         var adminScreeningEditingId = null;
+        var adminBookingSearchQuery = "";
+        var adminScreeningSearchQuery = "";
         var adminMoviesCache = [];
         var adminScreeningsCache = [];
 
@@ -2366,12 +2372,22 @@
           return stat;
         }
 
-        function renderAdminBookingsTab() {
+        function renderAdminBookingsTab(query) {
+          if (typeof query === "string") {
+            adminBookingSearchQuery = query.trim();
+          }
           var content = document.getElementById("adminBookingsContent");
           content.textContent = "Loading bookings...";
-          api("GET", "/admin/bookings")
+          var bookingPath = adminBookingSearchQuery
+            ? "/admin/bookings/search?query=" + encodeURIComponent(adminBookingSearchQuery)
+            : "/admin/bookings";
+          var heldPath = adminBookingSearchQuery
+            ? "/admin/held-seats/search?query=" + encodeURIComponent(adminBookingSearchQuery)
+            : "/admin/held-seats";
+
+          api("GET", bookingPath)
             .then(function (bookings) {
-              api("GET", "/admin/held-seats")
+              api("GET", heldPath)
                 .then(function (holds) {
                   renderAdminBookings(bookings, holds);
                 })
@@ -2649,13 +2665,19 @@
             });
         }
 
-        function renderAdminScreenings() {
+        function renderAdminScreenings(query) {
+          if (typeof query === "string") {
+            adminScreeningSearchQuery = query.trim();
+          }
           var section = document.getElementById("adminScreeningsSection");
           section.textContent = "Loading screenings...";
           api("GET", "/admin/movies")
             .then(function (moviesData) {
               adminMoviesCache = moviesData;
-              api("GET", "/admin/screenings")
+              var screeningPath = adminScreeningSearchQuery
+                ? "/admin/screenings/search?query=" + encodeURIComponent(adminScreeningSearchQuery)
+                : "/admin/screenings";
+              api("GET", screeningPath)
                 .then(function (screeningData) {
                   adminScreeningsCache = screeningData;
                   renderAdminScreeningSection();
@@ -2673,6 +2695,7 @@
           var section = document.getElementById("adminScreeningsSection");
           section.innerHTML = "";
           section.appendChild(renderAdminScreeningForm());
+          section.appendChild(renderAdminScreeningSearch());
 
           var list = document.createElement("div");
           list.className = "admin-list";
@@ -2686,6 +2709,35 @@
             list.appendChild(empty);
           }
           section.appendChild(list);
+        }
+
+        function renderAdminScreeningSearch() {
+          var wrapper = document.createElement("div");
+          wrapper.className = "search-bar";
+
+          var input = document.createElement("input");
+          input.type = "text";
+          input.id = "adminScreeningSearchInput";
+          input.className = "search-input";
+          input.placeholder = "Search showtimes by movie, date, time, hall...";
+          input.value = adminScreeningSearchQuery;
+          input.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+              renderAdminScreenings(input.value);
+            }
+          });
+          wrapper.appendChild(input);
+
+          var button = document.createElement("button");
+          button.className = "btn btn-primary";
+          button.style.width = "auto";
+          button.textContent = "Search";
+          button.addEventListener("click", function () {
+            renderAdminScreenings(input.value);
+          });
+          wrapper.appendChild(button);
+
+          return wrapper;
         }
 
         function renderAdminScreeningForm() {
@@ -3046,6 +3098,19 @@
         document.getElementById("searchBtn").addEventListener("click", function () {
           var val = document.getElementById("searchInput").value;
           loadMovies(val);
+        });
+        document.getElementById("searchInput").addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            loadMovies(document.getElementById("searchInput").value);
+          }
+        });
+        document.getElementById("adminBookingSearchBtn").addEventListener("click", function () {
+          renderAdminBookingsTab(document.getElementById("adminBookingSearchInput").value);
+        });
+        document.getElementById("adminBookingSearchInput").addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            renderAdminBookingsTab(document.getElementById("adminBookingSearchInput").value);
+          }
         });
 
         loadTicketPrices().then(function () {

@@ -4,6 +4,7 @@ import com.cinema.domain.entity.Movie;
 import com.cinema.domain.entity.Screening;
 import com.cinema.infrastructure.persistence.repository.MovieRepository;
 import com.cinema.web.dto.MovieResponse;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,22 +22,52 @@ public class MovieController {
     }
 
     @GetMapping("/movies")
+    @Transactional(readOnly = true)
     public List<MovieResponse> listMovies() {
         return convertToResponse(movieRepo.findAll());
     }
     
     @GetMapping("/movies/search")
-    public List<MovieResponse> searchMovies(@RequestParam String query) {
-        // Query mask implementation: search movies by title or genre
+    @Transactional(readOnly = true)
+    public List<MovieResponse> searchMovies(@RequestParam(defaultValue = "") String query) {
+        // Query mask: search movies and their showtime fields from one form.
         List<Movie> all = movieRepo.findAll();
+        if (query == null || query.isBlank()) {
+            return convertToResponse(all);
+        }
+
         List<Movie> filtered = new ArrayList<>();
-        String q = query.toLowerCase();
+        String q = query.toLowerCase().trim();
         for (Movie m : all) {
-            if (m.getTitle().toLowerCase().contains(q) || m.getGenre().toLowerCase().contains(q)) {
+            if (matchesMovie(m, q)) {
                 filtered.add(m);
             }
         }
         return convertToResponse(filtered);
+    }
+
+    private boolean matchesMovie(Movie movie, String query) {
+        if (contains(movie.getTitle(), query)
+                || contains(movie.getGenre(), query)
+                || contains(movie.getRating(), query)
+                || contains(String.valueOf(movie.getReleaseYear()), query)) {
+            return true;
+        }
+
+        for (Screening screening : movie.getScreenings()) {
+            if (contains(screening.getDateLabel(), query)
+                    || contains(screening.getScreeningDate().toString(), query)
+                    || contains(screening.getScreeningTime(), query)
+                    || contains(screening.getHall(), query)
+                    || contains(screening.getFormat(), query)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean contains(String value, String query) {
+        return value != null && value.toLowerCase().contains(query);
     }
 
     private List<MovieResponse> convertToResponse(List<Movie> movies) {
