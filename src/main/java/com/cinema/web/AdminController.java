@@ -360,9 +360,6 @@ public class AdminController {
 
         Screening screening = screeningRepo.findById(screeningId)
                 .orElseThrow(() -> new IllegalArgumentException("Screening not found"));
-        if (hasBookingHistory(screeningId)) {
-            throw new IllegalArgumentException("Screening has booking history and cannot be deleted");
-        }
 
         List<Seat> seats = seatRepo.findByScreeningId(screeningId);
         for (Seat seat : seats) {
@@ -370,6 +367,15 @@ public class AdminController {
                 throw new IllegalArgumentException("Release or cancel occupied seats before deleting this screening");
             }
         }
+
+        List<Booking> bookings = bookingRepo.findByScreeningId(screeningId);
+        for (Booking booking : bookings) {
+            if (booking.getStatus() == Booking.BookingStatus.CONFIRMED) {
+                throw new IllegalArgumentException("Cancel confirmed bookings before deleting this screening");
+            }
+        }
+
+        bookingRepo.deleteAll(bookings);
         seatRepo.deleteAll(seats);
         screeningRepo.delete(screening);
 
@@ -467,15 +473,6 @@ public class AdminController {
                 seatRepo.save(new Seat(screening, rowLabel, seatNum, seatId));
             }
         }
-    }
-
-    private boolean hasBookingHistory(Long screeningId) {
-        for (Booking booking : bookingRepo.findAll()) {
-            if (booking.getScreening().getId().equals(screeningId)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private AdminBookingResponse toResponse(Booking booking) {

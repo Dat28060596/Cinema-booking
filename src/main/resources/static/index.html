@@ -1010,6 +1010,57 @@
         margin-bottom: 0.5rem;
       }
 
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 2rem;
+        background: rgba(26, 21, 16, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .header-logo {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--accent);
+        letter-spacing: 0.12em;
+        cursor: pointer;
+      }
+
+      .header-nav {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .header-nav-link {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.4rem 0.8rem;
+        border-radius: var(--radius-sm);
+        transition: color 0.2s, background 0.2s;
+      }
+
+      .header-nav-link:hover {
+        color: var(--text);
+        background: var(--surface);
+      }
+
+      .user-badge {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
       .admin-booking-detail {
         color: var(--text-muted);
         font-size: 0.85rem;
@@ -1142,20 +1193,35 @@
       }
       .login-modal .btn { width: 100%; margin-bottom: 10px; }
       #loginError { color: #e74c3c; margin-bottom: 10px; font-size: 14px; display: none; }
-      .header-login-btn {
-        background: transparent; border: 1px solid #f5c518; color: #f5c518;
-        padding: 5px 15px; border-radius: 20px; cursor: pointer; margin-right: 15px;
-        font-family: inherit; font-size: 14px; transition: all 0.2s;
+      .header-btn {
+        background: transparent;
+        border: 1px solid rgba(201, 168, 76, 0.4);
+        color: var(--accent);
+        padding: 0.4rem 1.2rem;
+        border-radius: 20px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.85rem;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       }
-      .header-login-btn:hover { background: #f5c518; color: #000; }
+      .header-btn:hover {
+        background: var(--accent);
+        color: var(--bg);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--accent-dim);
+      }
+      .header-btn:active {
+        transform: translateY(0);
+      }
     </style>
   </head>
   <body>
     <div class="header">
       <div class="header-logo" id="headerLogo">CINEMA</div>
       <div class="header-nav">
-        <button class="header-login-btn" id="adminBookingsBtn" style="display: none;">Admin Console</button>
-        <button class="header-login-btn" id="headerLoginBtn">Login / Register</button>
+        <button class="header-btn" id="adminBookingsBtn" style="display: none;">Admin Console</button>
+        <button class="header-btn" id="headerLoginBtn">Login / Register</button>
+        <button class="header-btn" id="headerLogoutBtn" style="display: none;">Logout</button>
         <div class="user-badge" id="userBadge"></div>
       </div>
     </div>
@@ -1280,10 +1346,14 @@
         var savedUserId = localStorage.getItem("cinema_user_id");
         var savedUsername = localStorage.getItem("cinema_username");
         var isAdmin = localStorage.getItem("cinema_is_admin") === "true";
-        var userID = savedUserId || crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+        var userID = savedUserId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().replace(/-/g, "").slice(0, 12) : Math.random().toString(36).substring(2, 14));
         document.getElementById("userBadge").textContent = "user: " + (savedUsername || userID);
         if (isAdmin) {
           document.getElementById("adminBookingsBtn").style.display = "inline-block";
+        }
+        if (savedUsername) {
+          document.getElementById("headerLoginBtn").style.display = "none";
+          document.getElementById("headerLogoutBtn").style.display = "inline-block";
         }
 
         var movies = [];
@@ -2607,8 +2677,7 @@
           editBtn.className = "btn btn-secondary";
           editBtn.textContent = "Edit";
           editBtn.addEventListener("click", function () {
-            adminMovieEditingId = movie.id;
-            renderAdminMovieSection();
+            startAdminMovieEdit(movie.id);
           });
           actions.appendChild(editBtn);
 
@@ -2621,6 +2690,23 @@
           actions.appendChild(deleteBtn);
           item.appendChild(actions);
           return item;
+        }
+
+        function startAdminMovieEdit(movieId) {
+          adminMovieEditingId = movieId;
+          setAdminStatus("");
+          renderAdminMovieSection();
+
+          var form = document.querySelector("#adminMoviesSection .admin-form");
+          if (form) {
+            form.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+
+          var titleInput = document.getElementById("adminMovieTitle");
+          if (titleInput) {
+            titleInput.focus();
+            titleInput.select();
+          }
         }
 
         function saveAdminMovie() {
@@ -2834,7 +2920,7 @@
         }
 
         function deleteAdminScreening(screeningId) {
-          if (!confirm("Delete screening #" + screeningId + "? It must have no booking history.")) return;
+          if (!confirm("Delete screening #" + screeningId + "? It must have no held seats or confirmed bookings.")) return;
           api("DELETE", "/admin/screenings/" + screeningId)
             .then(function () {
               setAdminStatus("Screening deleted.", "success");
@@ -3011,64 +3097,83 @@
             pollInterval = null;
           }
           resetTicketCounts(1);
-          ageConfirmed = false;
-          customerInfo = {
-            email: "",
-            emailRepeat: "",
-            firstName: "",
-            lastName: ""
-          };
           loadMovies("");
           showView("movieGridView");
         }
 
-
         var isLoginMode = true;
 
-        function updateAuthModal() {
-            document.getElementById("authModalTitle").textContent = isLoginMode ? "Login" : "Register";
-            document.getElementById("loginSubmitBtn").textContent = isLoginMode ? "Login" : "Register";
-            document.getElementById("authModeToggle").textContent = isLoginMode ? "Don't have an account? Register" : "Already have an account? Login";
-            document.getElementById("loginError").style.display = "none";
+        function setAuthMode(loginMode) {
+          isLoginMode = loginMode;
+          document.getElementById("authModalTitle").textContent = isLoginMode ? "Login" : "Register";
+          document.getElementById("loginSubmitBtn").textContent = isLoginMode ? "Login" : "Register";
+          document.getElementById("authModeToggle").textContent = isLoginMode
+            ? "Don't have an account? Register"
+            : "Already have an account? Login";
+          document.getElementById("loginError").style.display = "none";
         }
 
-        document.getElementById("authModeToggle").addEventListener("click", function(e) {
-            e.preventDefault();
-            isLoginMode = !isLoginMode;
-            updateAuthModal();
-        });
-
-        document.getElementById("headerLoginBtn").addEventListener("click", function() {
-          document.getElementById("loginModalBackdrop").style.display = "flex";
-          isLoginMode = true;
-          updateAuthModal();
+        function openAuthModal(loginMode) {
+          setAuthMode(loginMode);
           document.getElementById("loginUsername").value = "";
           document.getElementById("loginPassword").value = "";
-        });
+          document.getElementById("loginModalBackdrop").style.display = "flex";
+          document.getElementById("loginUsername").focus();
+        }
 
-        document.getElementById("loginCancelBtn").addEventListener("click", function() {
+        function closeAuthModal() {
           document.getElementById("loginModalBackdrop").style.display = "none";
-        });
+          document.getElementById("loginError").style.display = "none";
+        }
 
-        document.getElementById("loginSubmitBtn").addEventListener("click", function() {
-          var u = document.getElementById("loginUsername").value;
+        document.getElementById("loginSubmitBtn").addEventListener("click", function () {
+          var u = document.getElementById("loginUsername").value.trim();
           var p = document.getElementById("loginPassword").value;
           var endpoint = isLoginMode ? "/auth/login" : "/auth/register";
-          
+
           api("POST", endpoint, { username: u, password: p })
-            .then(function(res) {
+            .then(function (res) {
               if (res.success) {
                 localStorage.setItem("cinema_is_admin", res.role === "ADMIN" ? "true" : "false");
                 localStorage.setItem("cinema_user_id", res.userId);
                 localStorage.setItem("cinema_username", res.username);
                 window.location.reload();
+              } else {
+                throw new Error(res.message || "Authentication failed");
               }
             })
-            .catch(function(err) {
+            .catch(function (err) {
               document.getElementById("loginError").textContent = err.message || "Authentication failed";
               document.getElementById("loginError").style.display = "block";
             });
         });
+
+        document.getElementById("loginPassword").addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            document.getElementById("loginSubmitBtn").click();
+          }
+        });
+
+        document.getElementById("headerLoginBtn").addEventListener("click", function () {
+          openAuthModal(true);
+        });
+        document.getElementById("headerLogoutBtn").addEventListener("click", function () {
+          localStorage.removeItem("cinema_is_admin");
+          localStorage.removeItem("cinema_user_id");
+          localStorage.removeItem("cinema_username");
+          window.location.reload();
+        });
+        document.getElementById("loginCancelBtn").addEventListener("click", closeAuthModal);
+        document.getElementById("authModeToggle").addEventListener("click", function (event) {
+          event.preventDefault();
+          setAuthMode(!isLoginMode);
+        });
+        document.getElementById("loginModalBackdrop").addEventListener("click", function (event) {
+          if (event.target === this) {
+            closeAuthModal();
+          }
+        });
+
         document.getElementById("headerLogo").addEventListener("click", resetAll);
         document.getElementById("adminBookingsBtn").addEventListener("click", openAdminBookingsView);
         document.getElementById("adminBackToMovies").addEventListener("click", resetAll);
@@ -3094,7 +3199,7 @@
         });
 
         document.getElementById("backToHome").addEventListener("click", resetAll);
-        
+
         document.getElementById("searchBtn").addEventListener("click", function () {
           var val = document.getElementById("searchInput").value;
           loadMovies(val);

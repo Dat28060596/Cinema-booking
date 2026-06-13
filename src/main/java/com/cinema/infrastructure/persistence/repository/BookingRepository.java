@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
+    List<Booking> findByScreeningId(Long screeningId);
+
     // Advanced SQL Query 1: Find all confirmed bookings for a specific customer
     @Query("SELECT b FROM Booking b JOIN FETCH b.customer c WHERE c.email = :email AND b.status = 'CONFIRMED'")
     List<Booking> findConfirmedBookingsByCustomerEmail(@Param("email") String email);
